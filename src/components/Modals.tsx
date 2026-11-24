@@ -14,6 +14,7 @@ interface ModalsProps {
   activeModal: ModalType;
   onClose: () => void;
   saving: boolean;
+  editingAssessmentId: string | null;
   uniqueSemesters: string[];
   courses: Course[];
   activeCourses: Course[];
@@ -89,6 +90,7 @@ export default function Modals({
   activeModal,
   onClose,
   saving,
+  editingAssessmentId,
   uniqueSemesters,
   courses,
   activeCourses,
@@ -108,6 +110,7 @@ export default function Modals({
   if (!activeModal) return null;
 
   const isExam = assessmentForm.type === 'Midterm' || assessmentForm.type === 'Final';
+  const isEditingAssessment = Boolean(editingAssessmentId);
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
@@ -117,7 +120,13 @@ export default function Modals({
             {activeModal === 'course' && 'Add Course to Semester'}
             {activeModal === 'routine' && 'Add Class to Routine'}
             {activeModal === 'assessment' &&
-              (isExam ? `Add ${assessmentForm.type} Exam` : `Add ${assessmentForm.type}`)}
+              (isEditingAssessment
+                ? isExam
+                  ? `Edit ${assessmentForm.type} Exam`
+                  : `Edit ${assessmentForm.type}`
+                : isExam
+                  ? `Add ${assessmentForm.type} Exam`
+                  : `Add ${assessmentForm.type}`)}
             {activeModal === 'note' && 'Create Quick Note'}
           </h3>
           <button
@@ -283,7 +292,7 @@ export default function Modals({
           </form>
         )}
 
-        {/* MODAL 3: ADD ASSESSMENT (QUIZ / ASSIGNMENT / MIDTERM / FINAL) */}
+        {/* MODAL 3: ADD / EDIT ASSESSMENT (QUIZ / ASSIGNMENT / MIDTERM / FINAL) */}
         {activeModal === 'assessment' && (
           <form onSubmit={onAddAssessment} className="space-y-4">
             <div>
@@ -365,7 +374,11 @@ export default function Modals({
               disabled={saving}
               className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold text-sm mt-2"
             >
-              {saving ? 'Saving...' : `Save ${assessmentForm.type}`}
+              {saving
+                ? 'Saving...'
+                : isEditingAssessment
+                  ? `Update ${assessmentForm.type}`
+                  : `Save ${assessmentForm.type}`}
             </button>
           </form>
         )}

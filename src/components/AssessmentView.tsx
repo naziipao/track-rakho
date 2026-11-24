@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Plus, Filter, CheckCircle2, Circle, Trash2, MapPin } from 'lucide-react';
+import { Plus, Filter, CheckCircle2, Circle, Trash2, MapPin, Pencil } from 'lucide-react';
 import { Assessment, AssessmentType, ASSESSMENT_TAB_META } from '@/lib/types';
 import { getCountdownBadge, getTypeBadgeColor } from '@/lib/helpers';
 
@@ -13,6 +13,7 @@ interface AssessmentViewProps {
   showCompleted: boolean;
   setShowCompleted: (val: boolean) => void;
   onOpenAddAssessment: (type: AssessmentType) => void;
+  onEditAssessment: (item: Assessment) => void;
   onToggleComplete: (item: Assessment) => void;
   onDeleteAssessment: (id: string) => void;
 }
@@ -25,6 +26,7 @@ export default function AssessmentView({
   showCompleted,
   setShowCompleted,
   onOpenAddAssessment,
+  onEditAssessment,
   onToggleComplete,
   onDeleteAssessment,
 }: AssessmentViewProps) {
@@ -132,7 +134,7 @@ export default function AssessmentView({
                     })}
                   </span>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
                     <button
                       onClick={() => onToggleComplete(item)}
                       className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors ${
@@ -149,7 +151,15 @@ export default function AssessmentView({
                       {item.is_completed ? 'Done' : 'Mark Done'}
                     </button>
                     <button
+                      onClick={() => onEditAssessment(item)}
+                      title="Edit"
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                    <button
                       onClick={() => onDeleteAssessment(item.id)}
+                      title="Delete"
                       className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40"
                     >
                       <Trash2 className="w-4 h-4" />

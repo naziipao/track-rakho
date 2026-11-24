@@ -24,6 +24,14 @@ import NotesView from '@/components/NotesView';
 import CoursesView from '@/components/CoursesView';
 import Modals from '@/components/Modals';
 
+const toDateTimeLocal = (isoString: string) => {
+  const d = new Date(isoString);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
+    d.getHours()
+  )}:${pad(d.getMinutes())}`;
+};
+
 export default function AcademicPlanner() {
   // --- AUTH & THEME STATE ---
   const [isUnlocked, setIsUnlocked] = useState<boolean>(false);
@@ -51,6 +59,7 @@ export default function AcademicPlanner() {
 
   // --- MODAL & FORM STATES ---
   const [activeModal, setActiveModal] = useState<ModalType>(null);
+  const [editingAssessmentId, setEditingAssessmentId] = useState<string | null>(null);
 
   const [courseForm, setCourseForm] = useState({
     semester: 'Fall 2026',
@@ -67,13 +76,13 @@ export default function AcademicPlanner() {
     room: '',
   });
   const [assessmentForm, setAssessmentForm] = useState({
-      course_id: '',
-      type: 'Quiz' as AssessmentType,
-      title: '',
-      topics: '',
-      due_date: '',
-      room: '',
-    });
+    course_id: '',
+    type: 'Quiz' as AssessmentType,
+    title: '',
+    topics: '',
+    due_date: '',
+    room: '',
+  });
   const [noteForm, setNoteForm] = useState({ course_code: 'General', title: '', content: '' });
 
   // --- INITIALIZATION (DATE, THEME & SESSION) ---
@@ -124,10 +133,34 @@ export default function AcademicPlanner() {
     localStorage.setItem('uniflow_active_semester', sem);
   };
 
+  const closeModal = () => {
+    setActiveModal(null);
+    setEditingAssessmentId(null);
+  };
+
   const openAssessmentModal = (defaultType?: AssessmentType) => {
-    if (defaultType) {
-      setAssessmentForm((prev) => ({ ...prev, type: defaultType }));
-    }
+    setEditingAssessmentId(null);
+    setAssessmentForm((prev) => ({
+      ...prev,
+      type: defaultType || prev.type,
+      title: '',
+      topics: '',
+      due_date: '',
+      room: '',
+    }));
+    setActiveModal('assessment');
+  };
+
+  const openEditAssessmentModal = (item: Assessment) => {
+    setEditingAssessmentId(item.id);
+    setAssessmentForm({
+      course_id: item.course_id,
+      type: item.type,
+      title: item.title,
+      topics: item.topics || '',
+      due_date: toDateTimeLocal(item.due_date),
+      room: item.room || '',
+    });
     setActiveModal('assessment');
   };
 
@@ -256,7 +289,7 @@ export default function AcademicPlanner() {
       faculty: '',
       color: COURSE_COLORS[(courses.length + 1) % COURSE_COLORS.length],
     });
-    setActiveModal(null);
+    closeModal();
     fetchAllData();
   };
 
@@ -278,7 +311,7 @@ export default function AcademicPlanner() {
       return;
     }
     setRoutineForm({ ...routineForm, room: '' });
-    setActiveModal(null);
+    closeModal();
     fetchAllData();
   };
 
@@ -288,33 +321,37 @@ export default function AcademicPlanner() {
   };
 
   const handleAddAssessment = async (e: React.FormEvent) => {
-      e.preventDefault();
-      const isExam = assessmentForm.type === 'Midterm' || assessmentForm.type === 'Final';
-      const finalTitle = isExam
-        ? `${assessmentForm.type} Exam`
-        : assessmentForm.title.trim();
+    e.preventDefault();
+    const isExam = assessmentForm.type === 'Midterm' || assessmentForm.type === 'Final';
+    const finalTitle = isExam
+      ? `${assessmentForm.type} Exam`
+      : assessmentForm.title.trim();
 
-      if (!assessmentForm.course_id || !finalTitle || !assessmentForm.due_date) return;
-      setSaving(true);
-      const { error } = await supabase.from('assessments').insert([
-        {
-          course_id: assessmentForm.course_id,
-          type: assessmentForm.type,
-          title: finalTitle,
-          topics: assessmentForm.topics.trim(),
-          due_date: new Date(assessmentForm.due_date).toISOString(),
-          room: isExam ? assessmentForm.room.trim() || null : null,
-        },
-      ]);
-      setSaving(false);
-      if (error) {
-        alert(`Could not save entry: ${error.message}`);
-        return;
-      }
-      setAssessmentForm({ ...assessmentForm, title: '', topics: '', due_date: '', room: '' });
-      setActiveModal(null);
-      fetchAllData();
+    if (!assessmentForm.course_id || !finalTitle || !assessmentForm.due_date) return;
+    setSaving(true);
+
+    const payload = {
+      course_id: assessmentForm.course_id,
+      type: assessmentForm.type,
+      title: finalTitle,
+      topics: assessmentForm.topics.trim(),
+      due_date: new Date(assessmentForm.due_date).toISOString(),
+      room: isExam ? assessmentForm.room.trim() || null : null,
     };
+
+    const { error } = editingAssessmentId
+      ? await supabase.from('assessments').update(payload).eq('id', editingAssessmentId)
+      : await supabase.from('assessments').insert([payload]);
+
+    setSaving(false);
+    if (error) {
+      alert(`Could not save entry: ${error.message}`);
+      return;
+    }
+    setAssessmentForm({ ...assessmentForm, title: '', topics: '', due_date: '', room: '' });
+    closeModal();
+    fetchAllData();
+  };
 
   const toggleAssessmentComplete = async (item: Assessment) => {
     await supabase.from('assessments').update({ is_completed: !item.is_completed }).eq('id', item.id);
@@ -339,7 +376,7 @@ export default function AcademicPlanner() {
       return;
     }
     setNoteForm({ course_code: 'General', title: '', content: '' });
-    setActiveModal(null);
+    closeModal();
     fetchAllData();
   };
 
@@ -486,6 +523,7 @@ export default function AcademicPlanner() {
               showCompleted={showCompleted}
               setShowCompleted={setShowCompleted}
               onOpenAddAssessment={openAssessmentModal}
+              onEditAssessment={openEditAssessmentModal}
               onToggleComplete={toggleAssessmentComplete}
               onDeleteAssessment={handleDeleteAssessment}
             />
@@ -526,8 +564,9 @@ export default function AcademicPlanner() {
 
       <Modals
         activeModal={activeModal}
-        onClose={() => setActiveModal(null)}
+        onClose={closeModal}
         saving={saving}
+        editingAssessmentId={editingAssessmentId}
         uniqueSemesters={uniqueSemesters}
         courses={courses}
         activeCourses={activeCourses}
