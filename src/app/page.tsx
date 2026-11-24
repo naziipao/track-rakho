@@ -532,7 +532,14 @@ export default function AcademicPlanner() {
 
   // --- AUTH LOADING & LOCK SCREEN ---
   if (authChecking) {
-    return <div className="min-h-screen" />;
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-3 p-6">
+        <div className="w-9 h-9 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+          Loading Track Rakho...
+        </p>
+      </div>
+    );
   }
 
   if (!isUnlocked) {
