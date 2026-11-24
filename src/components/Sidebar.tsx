@@ -234,41 +234,49 @@ export function MobileBottomNav({
   setActiveTab,
   pendingCounts,
 }: MobileBottomNavProps) {
-  const totalAssessments =
-    pendingCounts.Quiz + pendingCounts.Assignment + pendingCounts.Midterm + pendingCounts.Final;
-
   const items: { id: TabId; label: string; icon: React.ReactNode; badge?: number }[] = [
     { id: 'today', label: 'Today', icon: <Home className="w-5 h-5" /> },
     { id: 'routine', label: 'Routine', icon: <Calendar className="w-5 h-5" /> },
-    { id: 'Quiz', label: 'Tasks', icon: <CheckSquare className="w-5 h-5" />, badge: totalAssessments },
-    { id: 'attendance', label: 'Attend', icon: <UserCheck className="w-5 h-5" /> },
+    { id: 'Quiz', label: 'Quizzes', icon: <CheckSquare className="w-5 h-5" />, badge: pendingCounts.Quiz },
+    {
+      id: 'Assignment',
+      label: 'Assignments',
+      icon: <ClipboardList className="w-5 h-5" />,
+      badge: pendingCounts.Assignment,
+    },
+    { id: 'Midterm', label: 'Midterms', icon: <FileText className="w-5 h-5" />, badge: pendingCounts.Midterm },
+    { id: 'Final', label: 'Finals', icon: <GraduationCap className="w-5 h-5" />, badge: pendingCounts.Final },
+    { id: 'attendance', label: 'Attendance', icon: <UserCheck className="w-5 h-5" /> },
+    { id: 'notes', label: 'Notes', icon: <NotebookPen className="w-5 h-5" /> },
     { id: 'courses', label: 'Courses', icon: <BookOpen className="w-5 h-5" /> },
   ];
 
   return (
-    <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-t border-slate-200 dark:border-slate-800 px-2 py-2 flex justify-around">
-      {items.map((item) => {
-        const active = activeTab === item.id;
-        return (
-          <button
-            key={item.id}
-            onClick={() => setActiveTab(item.id)}
-            className={`relative flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl text-[11px] font-medium ${
-              active
-                ? 'text-teal-600 dark:text-teal-400'
-                : 'text-slate-500 dark:text-slate-400'
-            }`}
-          >
-            {item.icon}
-            <span>{item.label}</span>
-            {typeof item.badge === 'number' && item.badge > 0 && (
-              <span className="absolute top-0 right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-teal-600 text-white text-[10px] font-bold flex items-center justify-center">
-                {item.badge}
-              </span>
-            )}
-          </button>
-        );
-      })}
+    <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-t border-slate-200 dark:border-slate-800 px-2 py-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="flex items-center gap-1 w-max min-w-full">
+        {items.map((item) => {
+          const active = activeTab === item.id;
+          return (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              className={`relative shrink-0 min-w-[68px] flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-xl text-[11px] font-medium whitespace-nowrap transition-colors ${
+                active
+                  ? 'bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400'
+                  : 'text-slate-500 dark:text-slate-400'
+              }`}
+            >
+              {item.icon}
+              <span>{item.label}</span>
+              {typeof item.badge === 'number' && item.badge > 0 && (
+                <span className="absolute top-0.5 right-2 min-w-[16px] h-4 px-1 rounded-full bg-teal-600 text-white text-[10px] font-bold flex items-center justify-center">
+                  {item.badge}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
     </nav>
   );
 }
