@@ -437,6 +437,7 @@ export default function AcademicPlanner() {
       />
 
       <MobileHeader
+        setActiveTab={setActiveTab}
         uniqueSemesters={uniqueSemesters}
         activeSemester={activeSemester}
         onSelectActiveSemester={handleSelectActiveSemester}

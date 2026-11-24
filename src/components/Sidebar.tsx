@@ -51,7 +51,11 @@ export function Sidebar({
 
   return (
     <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 bg-white dark:bg-slate-900 border-r border-slate-200/80 dark:border-slate-800/80 z-30">
-      <div className="p-6 flex items-center gap-3">
+      <button
+        type="button"
+        onClick={() => setActiveTab('today')}
+        className="p-6 flex items-center gap-3 text-left w-full hover:opacity-85 transition-opacity cursor-pointer"
+      >
         <img
           src="/logo.svg"
           alt="Track Rakho Logo"
@@ -61,7 +65,7 @@ export function Sidebar({
           <h1 className="font-bold text-lg leading-tight tracking-tight">Track Rakho</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400">My Personal Planner</p>
         </div>
-      </div>
+      </button>
 
       {/* Active Semester Switcher in Sidebar */}
       {uniqueSemesters.length > 0 && (
@@ -138,6 +142,7 @@ export function Sidebar({
 }
 
 export function MobileHeader({
+  setActiveTab,
   uniqueSemesters,
   activeSemester,
   onSelectActiveSemester,
@@ -145,18 +150,22 @@ export function MobileHeader({
   onToggleDarkMode,
 }: Pick<
   NavigationProps,
-  'uniqueSemesters' | 'activeSemester' | 'onSelectActiveSemester' | 'darkMode' | 'onToggleDarkMode'
+  'setActiveTab' | 'uniqueSemesters' | 'activeSemester' | 'onSelectActiveSemester' | 'darkMode' | 'onToggleDarkMode'
 >) {
   return (
     <header className="md:hidden sticky top-0 z-30 bg-white/85 dark:bg-slate-900/85 backdrop-blur-lg border-b border-slate-200/80 dark:border-slate-800/80 px-4 py-3 flex items-center justify-between gap-2">
-      <div className="flex items-center gap-2">
+      <button
+        type="button"
+        onClick={() => setActiveTab('today')}
+        className="flex items-center gap-2 text-left hover:opacity-85 transition-opacity cursor-pointer"
+      >
         <img
           src="/logo.svg"
           alt="Track Rakho Logo"
           className="w-8 h-8 rounded-lg shrink-0"
         />
         <span className="font-bold text-base tracking-tight">Track Rakho</span>
-      </div>
+      </button>
 
       <div className="flex items-center gap-2">
         {uniqueSemesters.length > 0 && (
