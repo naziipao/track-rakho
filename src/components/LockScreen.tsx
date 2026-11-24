@@ -17,13 +17,19 @@ export default function LockScreen({
   onUnlock,
 }: LockScreenProps) {
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-100 via-indigo-50/40 to-slate-200 dark:from-slate-950 dark:via-indigo-950/20 dark:to-slate-900">
-      <div className="w-full max-w-sm bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-200/80 dark:border-slate-800 p-8 text-center">
-        <div className="w-14 h-14 mx-auto mb-5 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Focused Center Spotlight */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute w-[360px] h-[360px] rounded-full bg-teal-500/20 dark:bg-teal-400/15 blur-[110px]"
+      />
+
+      <div className="relative w-full max-w-sm card-surface rounded-3xl p-8 text-center">
+        <div className="w-14 h-14 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center text-white shadow-lg shadow-teal-500/30 ring-1 ring-white/25">
           <Lock className="w-7 h-7" />
         </div>
         <h1 className="text-2xl font-bold tracking-tight">Track Rakho</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1.5 mb-6">
+        <p className="text-sm text-stone-500 dark:text-zinc-400 mt-1.5 mb-6">
           Enter your personal PIN to access your schedule.
         </p>
         <form onSubmit={onUnlock} className="space-y-4">
@@ -33,7 +39,7 @@ export default function LockScreen({
             placeholder="••••"
             value={pinInput}
             onChange={(e) => setPinInput(e.target.value)}
-            className="w-full text-center text-2xl tracking-[0.5em] font-semibold py-3.5 px-4 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full text-center text-2xl tracking-[0.5em] font-semibold py-3.5 px-4 rounded-2xl bg-stone-100/90 dark:bg-white/[0.06] border border-stone-200 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all"
             autoFocus
           />
           {pinError && (
@@ -41,7 +47,7 @@ export default function LockScreen({
           )}
           <button
             type="submit"
-            className="w-full py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white font-semibold shadow-lg shadow-indigo-500/25 transition-all"
+            className="btn-tactile w-full py-3.5 rounded-2xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-semibold shadow-lg shadow-teal-500/25 hover:shadow-teal-500/40"
           >
             Unlock Workspace
           </button>

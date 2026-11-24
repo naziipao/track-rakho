@@ -111,12 +111,14 @@ export default function Modals({
 
   const isExam = assessmentForm.type === 'Midterm' || assessmentForm.type === 'Final';
   const isEditingAssessment = Boolean(editingAssessmentId);
+  const inputClass =
+    'w-full px-3.5 py-2.5 rounded-xl bg-stone-100/90 dark:bg-white/[0.06] border border-stone-200 dark:border-white/10 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all';
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div className="w-full sm:max-w-md bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl border border-slate-200 dark:border-slate-800 p-6 shadow-2xl">
+    <div className="fixed inset-0 z-50 bg-black/65 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div className="w-full sm:max-w-md bg-white dark:bg-[#12151f] rounded-t-3xl sm:rounded-3xl border border-stone-200 dark:border-white/12 p-6 shadow-[0_24px_64px_rgba(0,0,0,0.65)]">
         <div className="flex items-center justify-between mb-5">
-          <h3 className="font-bold text-lg">
+          <h3 className="font-bold text-lg tracking-tight">
             {activeModal === 'course' && 'Add Course to Semester'}
             {activeModal === 'routine' && 'Add Class to Routine'}
             {activeModal === 'assessment' &&
@@ -130,8 +132,10 @@ export default function Modals({
             {activeModal === 'note' && 'Create Quick Note'}
           </h3>
           <button
+            type="button"
             onClick={onClose}
-            className="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500"
+            aria-label="Close modal"
+            className="p-2 rounded-xl bg-stone-100 dark:bg-white/[0.07] text-stone-500 dark:text-zinc-400 hover:bg-rose-500/15 hover:text-rose-500 dark:hover:bg-rose-500/20 dark:hover:text-rose-400 active:bg-rose-500/25 active:text-rose-500 active:scale-90 transition-all duration-150"
           >
             <X className="w-4 h-4" />
           </button>
@@ -141,7 +145,9 @@ export default function Modals({
         {activeModal === 'course' && (
           <form onSubmit={onAddCourse} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold mb-1">Semester Name</label>
+              <label className="block text-xs font-semibold mb-1 text-stone-600 dark:text-zinc-300">
+                Semester Name
+              </label>
               <input
                 type="text"
                 required
@@ -149,7 +155,7 @@ export default function Modals({
                 placeholder="e.g., Fall 2026, Spring 2026, Semester 4"
                 value={courseForm.semester}
                 onChange={(e) => setCourseForm({ ...courseForm, semester: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm"
+                className={inputClass}
               />
               <datalist id="semester-suggestions">
                 {uniqueSemesters.map((sem) => (
@@ -158,49 +164,57 @@ export default function Modals({
               </datalist>
             </div>
             <div>
-              <label className="block text-xs font-semibold mb-1">Course Code</label>
+              <label className="block text-xs font-semibold mb-1 text-stone-600 dark:text-zinc-300">
+                Course Code
+              </label>
               <input
                 type="text"
                 required
                 placeholder="e.g., CSE340"
                 value={courseForm.code}
                 onChange={(e) => setCourseForm({ ...courseForm, code: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm"
+                className={inputClass}
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold mb-1">Course Title</label>
+              <label className="block text-xs font-semibold mb-1 text-stone-600 dark:text-zinc-300">
+                Course Title
+              </label>
               <input
                 type="text"
                 required
                 placeholder="e.g., Computer Architecture"
                 value={courseForm.name}
                 onChange={(e) => setCourseForm({ ...courseForm, name: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm"
+                className={inputClass}
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold mb-1">Faculty Initials</label>
+              <label className="block text-xs font-semibold mb-1 text-stone-600 dark:text-zinc-300">
+                Faculty Initials
+              </label>
               <input
                 type="text"
                 required
                 placeholder="e.g., FARS"
                 value={courseForm.faculty}
                 onChange={(e) => setCourseForm({ ...courseForm, faculty: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm"
+                className={inputClass}
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold mb-1.5">Color Tag</label>
-              <div className="flex gap-2">
+              <label className="block text-xs font-semibold mb-1.5 text-stone-600 dark:text-zinc-300">
+                Color Tag
+              </label>
+              <div className="flex gap-2.5 flex-wrap">
                 {COURSE_COLORS.map((color) => (
                   <button
                     type="button"
                     key={color}
                     onClick={() => setCourseForm({ ...courseForm, color })}
-                    className={`w-7 h-7 rounded-full transition-transform ${
+                    className={`w-7 h-7 rounded-full transition-all duration-150 active:scale-90 hover:scale-110 ${
                       courseForm.color === color
-                        ? 'scale-125 ring-2 ring-offset-2 ring-indigo-500 dark:ring-offset-slate-900'
+                        ? 'scale-125 ring-2 ring-offset-2 ring-teal-500 dark:ring-offset-[#12151f]'
                         : ''
                     }`}
                     style={{ backgroundColor: color }}
@@ -211,7 +225,7 @@ export default function Modals({
             <button
               type="submit"
               disabled={saving}
-              className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold text-sm mt-2"
+              className="btn-tactile w-full py-3 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 disabled:opacity-50 text-white font-semibold text-sm mt-2 shadow-lg shadow-teal-500/25"
             >
               {saving ? 'Saving...' : 'Save Course'}
             </button>
@@ -222,28 +236,32 @@ export default function Modals({
         {activeModal === 'routine' && (
           <form onSubmit={onAddRoutine} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold mb-1">Select Course</label>
+              <label className="block text-xs font-semibold mb-1 text-stone-600 dark:text-zinc-300">
+                Select Course
+              </label>
               <select
                 value={routineForm.course_id}
                 onChange={(e) => setRoutineForm({ ...routineForm, course_id: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm"
+                className={inputClass}
               >
                 {activeCourses.map((c) => (
-                  <option key={c.id} value={c.id}>
+                  <option key={c.id} value={c.id} className="dark:bg-zinc-900">
                     {c.code} — {c.name} ({c.faculty})
                   </option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold mb-1">Day of Week</label>
+              <label className="block text-xs font-semibold mb-1 text-stone-600 dark:text-zinc-300">
+                Day of Week
+              </label>
               <select
                 value={routineForm.day_of_week}
                 onChange={(e) => setRoutineForm({ ...routineForm, day_of_week: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm"
+                className={inputClass}
               >
                 {DAYS_OF_WEEK.map((d) => (
-                  <option key={d} value={d}>
+                  <option key={d} value={d} className="dark:bg-zinc-900">
                     {d}
                   </option>
                 ))}
@@ -251,59 +269,67 @@ export default function Modals({
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold mb-1">Start Time</label>
+                <label className="block text-xs font-semibold mb-1 text-stone-600 dark:text-zinc-300">
+                  Start Time
+                </label>
                 <input
                   type="time"
                   required
                   value={routineForm.start_time}
                   onChange={(e) => setRoutineForm({ ...routineForm, start_time: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm"
+                  className={inputClass}
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold mb-1">End Time</label>
+                <label className="block text-xs font-semibold mb-1 text-stone-600 dark:text-zinc-300">
+                  End Time
+                </label>
                 <input
                   type="time"
                   required
                   value={routineForm.end_time}
                   onChange={(e) => setRoutineForm({ ...routineForm, end_time: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm"
+                  className={inputClass}
                 />
               </div>
             </div>
             <div>
-              <label className="block text-xs font-semibold mb-1">Room Number</label>
+              <label className="block text-xs font-semibold mb-1 text-stone-600 dark:text-zinc-300">
+                Room Number
+              </label>
               <input
                 type="text"
                 required
                 placeholder="e.g., UB40203 or Lab-4"
                 value={routineForm.room}
                 onChange={(e) => setRoutineForm({ ...routineForm, room: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm"
+                className={inputClass}
               />
             </div>
             <button
               type="submit"
               disabled={saving}
-              className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold text-sm mt-2"
+              className="btn-tactile w-full py-3 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 disabled:opacity-50 text-white font-semibold text-sm mt-2 shadow-lg shadow-teal-500/25"
             >
               {saving ? 'Saving...' : 'Add to Schedule'}
             </button>
           </form>
         )}
 
-        {/* MODAL 3: ADD / EDIT ASSESSMENT (QUIZ / ASSIGNMENT / MIDTERM / FINAL) */}
+        {/* MODAL 3: ADD / EDIT ASSESSMENT */}
         {activeModal === 'assessment' && (
           <form onSubmit={onAddAssessment} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold mb-1">Course</label>
+              <label className="block text-xs font-semibold mb-1 text-stone-600 dark:text-zinc-300">
+                Course
+              </label>
               <select
                 value={assessmentForm.course_id}
                 onChange={(e) => setAssessmentForm({ ...assessmentForm, course_id: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm"
+                className={inputClass}
               >
                 {activeCourses.map((c) => (
-                  <option key={c.id} value={c.id}>
+                  <option key={c.id} value={c.id} className="dark:bg-zinc-900">
                     {c.code} — {c.name}
                   </option>
                 ))}
@@ -312,7 +338,9 @@ export default function Modals({
 
             {!isExam && (
               <div>
-                <label className="block text-xs font-semibold mb-1">Title / Number</label>
+                <label className="block text-xs font-semibold mb-1 text-stone-600 dark:text-zinc-300">
+                  Title / Number
+                </label>
                 <input
                   type="text"
                   required
@@ -321,13 +349,13 @@ export default function Modals({
                   }
                   value={assessmentForm.title}
                   onChange={(e) => setAssessmentForm({ ...assessmentForm, title: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm"
+                  className={inputClass}
                 />
               </div>
             )}
 
             <div>
-              <label className="block text-xs font-semibold mb-1">
+              <label className="block text-xs font-semibold mb-1 text-stone-600 dark:text-zinc-300">
                 {isExam ? 'Exam Date & Time' : 'Date & Time / Deadline'}
               </label>
               <input
@@ -335,27 +363,29 @@ export default function Modals({
                 required
                 value={assessmentForm.due_date}
                 onChange={(e) => setAssessmentForm({ ...assessmentForm, due_date: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm"
+                className={inputClass}
               />
             </div>
 
             {isExam && (
               <div>
-                <label className="block text-xs font-semibold mb-1">
-                  Room Number <span className="text-slate-400 font-normal">(optional)</span>
+                <label className="block text-xs font-semibold mb-1 text-stone-600 dark:text-zinc-300">
+                  Room Number <span className="text-stone-400 dark:text-zinc-500 font-normal">(optional)</span>
                 </label>
                 <input
                   type="text"
                   placeholder="e.g., UB40203 or Exam Hall 2"
                   value={assessmentForm.room}
                   onChange={(e) => setAssessmentForm({ ...assessmentForm, room: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm"
+                  className={inputClass}
                 />
               </div>
             )}
 
             <div>
-              <label className="block text-xs font-semibold mb-1">Syllabus / Topics</label>
+              <label className="block text-xs font-semibold mb-1 text-stone-600 dark:text-zinc-300">
+                Syllabus / Topics
+              </label>
               <textarea
                 rows={isExam ? 3 : 2}
                 placeholder={
@@ -365,14 +395,14 @@ export default function Modals({
                 }
                 value={assessmentForm.topics}
                 onChange={(e) => setAssessmentForm({ ...assessmentForm, topics: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm"
+                className={inputClass}
               />
             </div>
 
             <button
               type="submit"
               disabled={saving}
-              className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold text-sm mt-2"
+              className="btn-tactile w-full py-3 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 disabled:opacity-50 text-white font-semibold text-sm mt-2 shadow-lg shadow-teal-500/25"
             >
               {saving
                 ? 'Saving...'
@@ -387,46 +417,52 @@ export default function Modals({
         {activeModal === 'note' && (
           <form onSubmit={onAddNote} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold mb-1">Course Tag</label>
+              <label className="block text-xs font-semibold mb-1 text-stone-600 dark:text-zinc-300">
+                Course Tag
+              </label>
               <select
                 value={noteForm.course_code}
                 onChange={(e) => setNoteForm({ ...noteForm, course_code: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm"
+                className={inputClass}
               >
-                <option value="General">General</option>
+                <option value="General" className="dark:bg-zinc-900">General</option>
                 {courses.map((c) => (
-                  <option key={c.id} value={c.code}>
+                  <option key={c.id} value={c.code} className="dark:bg-zinc-900">
                     {c.code} — {c.name}
                   </option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold mb-1">Note Title</label>
+              <label className="block text-xs font-semibold mb-1 text-stone-600 dark:text-zinc-300">
+                Note Title
+              </label>
               <input
                 type="text"
                 required
                 placeholder="e.g., Google Drive Folder / Key Formulas"
                 value={noteForm.title}
                 onChange={(e) => setNoteForm({ ...noteForm, title: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm"
+                className={inputClass}
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold mb-1">Content</label>
+              <label className="block text-xs font-semibold mb-1 text-stone-600 dark:text-zinc-300">
+                Content
+              </label>
               <textarea
                 rows={4}
                 required
                 placeholder="Write your notes here..."
                 value={noteForm.content}
                 onChange={(e) => setNoteForm({ ...noteForm, content: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm"
+                className={inputClass}
               />
             </div>
             <button
               type="submit"
               disabled={saving}
-              className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold text-sm mt-2"
+              className="btn-tactile w-full py-3 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 disabled:opacity-50 text-white font-semibold text-sm mt-2 shadow-lg shadow-teal-500/25"
             >
               {saving ? 'Saving...' : 'Save Note'}
             </button>
