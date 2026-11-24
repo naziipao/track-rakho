@@ -15,6 +15,19 @@ interface AssessmentViewProps {
   onDeleteAssessment: (id: string) => void;
 }
 
+const getCardGlowStyle = (type: AssessmentType) => {
+  switch (type) {
+    case 'Quiz':
+      return 'border-cyan-500/35 dark:border-cyan-400/35 shadow-[0_0_24px_-4px_rgba(34,211,238,0.18)] dark:shadow-[0_0_28px_-4px_rgba(34,211,238,0.22)] hover:border-cyan-400/75 dark:hover:border-cyan-300/70 hover:shadow-[0_0_36px_-2px_rgba(34,211,238,0.34)]';
+    case 'Assignment':
+      return 'border-emerald-500/35 dark:border-emerald-400/35 shadow-[0_0_24px_-4px_rgba(16,185,129,0.18)] dark:shadow-[0_0_28px_-4px_rgba(52,211,153,0.22)] hover:border-emerald-400/75 dark:hover:border-emerald-300/70 hover:shadow-[0_0_36px_-2px_rgba(52,211,153,0.34)]';
+    case 'Midterm':
+      return 'border-amber-500/40 dark:border-amber-400/35 shadow-[0_0_24px_-4px_rgba(245,158,11,0.18)] dark:shadow-[0_0_28px_-4px_rgba(251,191,36,0.22)] hover:border-amber-400/80 dark:hover:border-amber-300/75 hover:shadow-[0_0_36px_-2px_rgba(251,191,36,0.34)]';
+    case 'Final':
+      return 'border-rose-500/35 dark:border-rose-400/35 shadow-[0_0_24px_-4px_rgba(244,63,94,0.18)] dark:shadow-[0_0_28px_-4px_rgba(251,113,133,0.22)] hover:border-rose-400/75 dark:hover:border-rose-300/70 hover:shadow-[0_0_36px_-2px_rgba(251,113,133,0.34)]';
+  }
+};
+
 export default function AssessmentView({
   activeType,
   assessments,
@@ -69,8 +82,14 @@ export default function AssessmentView({
             return (
               <div
                 key={item.id}
-                className="p-5 rounded-2xl card-surface hover:border-teal-500/40 dark:hover:border-teal-400/35 hover:shadow-[0_12px_36px_rgba(20,184,166,0.1)] flex flex-col justify-between"
+                className={`relative overflow-hidden p-5 rounded-2xl bg-white/90 dark:bg-[#11131a]/90 backdrop-blur-xl border ring-1 ring-inset ring-white/60 dark:ring-white/[0.08] transition-all duration-200 hover:-translate-y-0.5 flex flex-col justify-between ${getCardGlowStyle(item.type)}`}
               >
+                {/* Top-edge specular light reflection */}
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-white/70 dark:via-white/30 to-transparent"
+                />
+
                 <div>
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -117,7 +136,7 @@ export default function AssessmentView({
                   )}
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-stone-200/70 dark:border-white/[0.07] flex items-center justify-between gap-2">
+                <div className="mt-4 pt-3 border-t border-stone-200/70 dark:border-white/[0.08] flex items-center justify-between gap-2">
                   <span className="text-xs font-medium text-stone-500 dark:text-zinc-400">
                     {new Date(item.due_date).toLocaleString('en-US', {
                       month: 'short',
