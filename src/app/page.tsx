@@ -67,12 +67,13 @@ export default function AcademicPlanner() {
     room: '',
   });
   const [assessmentForm, setAssessmentForm] = useState({
-    course_id: '',
-    type: 'Quiz' as AssessmentType,
-    title: '',
-    topics: '',
-    due_date: '',
-  });
+      course_id: '',
+      type: 'Quiz' as AssessmentType,
+      title: '',
+      topics: '',
+      due_date: '',
+      room: '',
+    });
   const [noteForm, setNoteForm] = useState({ course_code: 'General', title: '', content: '' });
 
   // --- INITIALIZATION (DATE, THEME & SESSION) ---
@@ -287,24 +288,33 @@ export default function AcademicPlanner() {
   };
 
   const handleAddAssessment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!assessmentForm.course_id || !assessmentForm.title.trim() || !assessmentForm.due_date) return;
-    setSaving(true);
-    const { error } = await supabase.from('assessments').insert([
-      {
-        ...assessmentForm,
-        due_date: new Date(assessmentForm.due_date).toISOString(),
-      },
-    ]);
-    setSaving(false);
-    if (error) {
-      alert(`Could not save entry: ${error.message}`);
-      return;
-    }
-    setAssessmentForm({ ...assessmentForm, title: '', topics: '', due_date: '' });
-    setActiveModal(null);
-    fetchAllData();
-  };
+      e.preventDefault();
+      const isExam = assessmentForm.type === 'Midterm' || assessmentForm.type === 'Final';
+      const finalTitle = isExam
+        ? `${assessmentForm.type} Exam`
+        : assessmentForm.title.trim();
+
+      if (!assessmentForm.course_id || !finalTitle || !assessmentForm.due_date) return;
+      setSaving(true);
+      const { error } = await supabase.from('assessments').insert([
+        {
+          course_id: assessmentForm.course_id,
+          type: assessmentForm.type,
+          title: finalTitle,
+          topics: assessmentForm.topics.trim(),
+          due_date: new Date(assessmentForm.due_date).toISOString(),
+          room: isExam ? assessmentForm.room.trim() || null : null,
+        },
+      ]);
+      setSaving(false);
+      if (error) {
+        alert(`Could not save entry: ${error.message}`);
+        return;
+      }
+      setAssessmentForm({ ...assessmentForm, title: '', topics: '', due_date: '', room: '' });
+      setActiveModal(null);
+      fetchAllData();
+    };
 
   const toggleAssessmentComplete = async (item: Assessment) => {
     await supabase.from('assessments').update({ is_completed: !item.is_completed }).eq('id', item.id);

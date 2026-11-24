@@ -26,6 +26,7 @@ export interface Assessment {
   title: string;
   topics: string;
   due_date: string;
+  room?: string | null;
   is_completed: boolean;
   courses?: Course;
 }

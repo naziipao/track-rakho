@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Plus, Filter, CheckCircle2, Circle, Trash2 } from 'lucide-react';
+import { Plus, Filter, CheckCircle2, Circle, Trash2, MapPin } from 'lucide-react';
 import { Assessment, AssessmentType, ASSESSMENT_TAB_META } from '@/lib/types';
 import { getCountdownBadge, getTypeBadgeColor } from '@/lib/helpers';
 
@@ -94,6 +94,12 @@ export default function AssessmentView({
                       >
                         {item.type}
                       </span>
+                      {item.room && (
+                        <span className="text-xs font-medium px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center gap-1">
+                          <MapPin className="w-3 h-3" />
+                          {item.room}
+                        </span>
+                      )}
                     </div>
                     {!item.is_completed && (
                       <span

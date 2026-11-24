@@ -57,6 +57,7 @@ interface ModalsProps {
     title: string;
     topics: string;
     due_date: string;
+    room: string;
   };
   setAssessmentForm: React.Dispatch<
     React.SetStateAction<{
@@ -65,6 +66,7 @@ interface ModalsProps {
       title: string;
       topics: string;
       due_date: string;
+      room: string;
     }>
   >;
   onAddAssessment: (e: React.FormEvent) => void;
@@ -105,6 +107,8 @@ export default function Modals({
 }: ModalsProps) {
   if (!activeModal) return null;
 
+  const isExam = assessmentForm.type === 'Midterm' || assessmentForm.type === 'Final';
+
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div className="w-full sm:max-w-md bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl border border-slate-200 dark:border-slate-800 p-6 shadow-2xl">
@@ -112,7 +116,8 @@ export default function Modals({
           <h3 className="font-bold text-lg">
             {activeModal === 'course' && 'Add Course to Semester'}
             {activeModal === 'routine' && 'Add Class to Routine'}
-            {activeModal === 'assessment' && `Add ${assessmentForm.type}`}
+            {activeModal === 'assessment' &&
+              (isExam ? `Add ${assessmentForm.type} Exam` : `Add ${assessmentForm.type}`)}
             {activeModal === 'note' && 'Create Quick Note'}
           </h3>
           <button
@@ -278,7 +283,7 @@ export default function Modals({
           </form>
         )}
 
-        {/* MODAL 3: ADD ASSESSMENT */}
+        {/* MODAL 3: ADD ASSESSMENT (QUIZ / ASSIGNMENT / MIDTERM / FINAL) */}
         {activeModal === 'assessment' && (
           <form onSubmit={onAddAssessment} className="space-y-4">
             <div>
@@ -290,34 +295,32 @@ export default function Modals({
               >
                 {activeCourses.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.code}
+                    {c.code} — {c.name}
                   </option>
                 ))}
               </select>
             </div>
+
+            {!isExam && (
+              <div>
+                <label className="block text-xs font-semibold mb-1">Title / Number</label>
+                <input
+                  type="text"
+                  required
+                  placeholder={
+                    assessmentForm.type === 'Quiz' ? 'e.g., Quiz 2' : 'e.g., Assignment 1'
+                  }
+                  value={assessmentForm.title}
+                  onChange={(e) => setAssessmentForm({ ...assessmentForm, title: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm"
+                />
+              </div>
+            )}
+
             <div>
-              <label className="block text-xs font-semibold mb-1">Title / Number</label>
-              <input
-                type="text"
-                required
-                placeholder="e.g., Quiz 2, Assignment 1, Midterm"
-                value={assessmentForm.title}
-                onChange={(e) => setAssessmentForm({ ...assessmentForm, title: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold mb-1">Syllabus / Topics</label>
-              <textarea
-                rows={2}
-                placeholder="e.g., Linked Lists, Stacks & Queues (Lectures 4-7)"
-                value={assessmentForm.topics}
-                onChange={(e) => setAssessmentForm({ ...assessmentForm, topics: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold mb-1">Date & Time / Deadline</label>
+              <label className="block text-xs font-semibold mb-1">
+                {isExam ? 'Exam Date & Time' : 'Date & Time / Deadline'}
+              </label>
               <input
                 type="datetime-local"
                 required
@@ -326,6 +329,37 @@ export default function Modals({
                 className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm"
               />
             </div>
+
+            {isExam && (
+              <div>
+                <label className="block text-xs font-semibold mb-1">
+                  Room Number <span className="text-slate-400 font-normal">(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g., UB40203 or Exam Hall 2"
+                  value={assessmentForm.room}
+                  onChange={(e) => setAssessmentForm({ ...assessmentForm, room: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm"
+                />
+              </div>
+            )}
+
+            <div>
+              <label className="block text-xs font-semibold mb-1">Syllabus / Topics</label>
+              <textarea
+                rows={isExam ? 3 : 2}
+                placeholder={
+                  isExam
+                    ? 'e.g., Chapters 1-5, Lectures 1-12, Lab 1-4'
+                    : 'e.g., Linked Lists, Stacks & Queues (Lectures 4-7)'
+                }
+                value={assessmentForm.topics}
+                onChange={(e) => setAssessmentForm({ ...assessmentForm, topics: e.target.value })}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm"
+              />
+            </div>
+
             <button
               type="submit"
               disabled={saving}
