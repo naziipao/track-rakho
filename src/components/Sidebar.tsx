@@ -88,7 +88,7 @@ export function Sidebar({
           className="flex items-center gap-3 text-left w-full"
         >
           <img
-            src="/logo.png"
+            src="/logo.svg"
             alt="Track Rakho Logo"
             className="w-9 h-9 rounded-xl object-contain shrink-0"
           />
