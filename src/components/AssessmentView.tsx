@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Plus, Trash2, MapPin, Pencil } from 'lucide-react';
 import { Assessment, AssessmentType, ASSESSMENT_TAB_META } from '@/lib/types';
 import { getCountdownBadge, getTypeBadgeColor } from '@/lib/helpers';
@@ -25,6 +25,7 @@ export default function AssessmentView({
   onDeleteAssessment,
 }: AssessmentViewProps) {
   const meta = ASSESSMENT_TAB_META[activeType];
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   return (
     <div className="space-y-6">
@@ -63,6 +64,8 @@ export default function AssessmentView({
           {assessments.map((item) => {
             const countdown = getCountdownBadge(item.due_date);
             const isExam = item.type === 'Midterm' || item.type === 'Final';
+            const isConfirming = confirmDeleteId === item.id;
+
             return (
               <div
                 key={item.id}
@@ -114,7 +117,7 @@ export default function AssessmentView({
                   )}
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
                   <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                     {new Date(item.due_date).toLocaleString('en-US', {
                       month: 'short',
@@ -124,22 +127,45 @@ export default function AssessmentView({
                     })}
                   </span>
 
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      onClick={() => onEditAssessment(item)}
-                      title="Edit"
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => onDeleteAssessment(item.id)}
-                      title="Delete"
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
+                  {isConfirming ? (
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-medium text-rose-600 dark:text-rose-400 mr-1">
+                        Delete?
+                      </span>
+                      <button
+                        onClick={() => {
+                          onDeleteAssessment(item.id);
+                          setConfirmDeleteId(null);
+                        }}
+                        className="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold transition-colors"
+                      >
+                        Confirm
+                      </button>
+                      <button
+                        onClick={() => setConfirmDeleteId(null)}
+                        className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-medium transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => onEditAssessment(item)}
+                        title="Edit"
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => setConfirmDeleteId(item.id)}
+                        title="Delete"
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             );
