@@ -88,7 +88,7 @@ export function Sidebar({
           className="flex items-center gap-3 text-left w-full"
         >
           <img
-            src="/logo.svg"
+            src="/logo.png?v=2"
             alt="Track Rakho Logo"
             className="w-9 h-9 rounded-xl object-contain shrink-0"
           />
@@ -183,7 +183,7 @@ export function MobileHeader({
         className="flex items-center gap-2 shrink-0"
       >
         <img
-          src="/logo.png"
+          src="/logo.png?v=2"
           alt="Track Rakho Logo"
           className="w-7 h-7 rounded-lg object-contain shrink-0"
         />
