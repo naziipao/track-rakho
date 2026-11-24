@@ -85,9 +85,16 @@ export function Sidebar({
       <div className="p-5 border-b border-slate-200 dark:border-slate-800">
         <button
           onClick={() => setActiveTab('today')}
-          className="text-left w-full font-extrabold text-xl tracking-tight text-teal-600 dark:text-teal-400"
+          className="flex items-center gap-3 text-left w-full"
         >
-          Track Rakho
+          <img
+            src="/logo.png"
+            alt="Track Rakho Logo"
+            className="w-9 h-9 rounded-xl object-contain shrink-0"
+          />
+          <span className="font-extrabold text-xl tracking-tight text-teal-600 dark:text-teal-400">
+            Track Rakho
+          </span>
         </button>
 
         {uniqueSemesters.length > 0 && (
@@ -173,9 +180,16 @@ export function MobileHeader({
     <header className="md:hidden sticky top-0 z-30 flex items-center justify-between gap-2 px-4 py-3 bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-200 dark:border-slate-800">
       <button
         onClick={() => setActiveTab('today')}
-        className="font-extrabold text-lg text-teal-600 dark:text-teal-400 shrink-0"
+        className="flex items-center gap-2 shrink-0"
       >
-        Track Rakho
+        <img
+          src="/logo.png"
+          alt="Track Rakho Logo"
+          className="w-7 h-7 rounded-lg object-contain shrink-0"
+        />
+        <span className="font-extrabold text-lg text-teal-600 dark:text-teal-400">
+          Track Rakho
+        </span>
       </button>
 
       <div className="flex items-center gap-2">
