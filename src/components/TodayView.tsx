@@ -16,12 +16,10 @@ interface TodayViewProps {
   todayDateLabel: string;
   todayName: string;
   activeSemester: string;
-  activeCoursesCount: number;
   pendingCounts: Record<AssessmentType, number>;
   todaysClasses: Routine[];
   upcomingAssessments: Assessment[];
   setActiveTab: (tab: TabId) => void;
-  onOpenAssessmentModal: (defaultType?: AssessmentType) => void;
   onOpenNoteModal: () => void;
 }
 
@@ -29,12 +27,10 @@ export default function TodayView({
   todayDateLabel,
   todayName,
   activeSemester,
-  activeCoursesCount,
   pendingCounts,
   todaysClasses,
   upcomingAssessments,
   setActiveTab,
-  onOpenAssessmentModal,
   onOpenNoteModal,
 }: TodayViewProps) {
   return (
@@ -50,13 +46,6 @@ export default function TodayView({
           </h2>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => onOpenAssessmentModal('Quiz')}
-            disabled={activeCoursesCount === 0}
-            className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white text-xs sm:text-sm font-medium flex items-center gap-1.5 shadow-sm transition-all"
-          >
-            <Plus className="w-4 h-4" /> Add Quiz / Exam / Task
-          </button>
           <button
             onClick={onOpenNoteModal}
             className="px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs sm:text-sm font-medium flex items-center gap-1.5 transition-all"

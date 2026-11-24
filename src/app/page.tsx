@@ -472,12 +472,10 @@ export default function AcademicPlanner() {
               todayDateLabel={todayDateLabel}
               todayName={todayName}
               activeSemester={activeSemester}
-              activeCoursesCount={activeCourses.length}
               pendingCounts={pendingCounts}
               todaysClasses={todaysClasses}
               upcomingAssessments={visibleAssessments}
               setActiveTab={setActiveTab}
-              onOpenAssessmentModal={openAssessmentModal}
               onOpenNoteModal={() => setActiveModal('note')}
             />
           )}
