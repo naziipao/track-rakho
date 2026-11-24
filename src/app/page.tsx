@@ -37,6 +37,7 @@ const toDateTimeLocal = (isoString: string) => {
 export default function AcademicPlanner() {
   // --- AUTH & THEME STATE ---
   const [isUnlocked, setIsUnlocked] = useState<boolean>(false);
+  const [authChecking, setAuthChecking] = useState<boolean>(true);
   const [pinInput, setPinInput] = useState<string>('');
   const [pinError, setPinError] = useState<boolean>(false);
   const [darkMode, setDarkMode] = useState<boolean>(false);
@@ -87,7 +88,7 @@ export default function AcademicPlanner() {
   });
   const [noteForm, setNoteForm] = useState({ course_code: 'General', title: '', content: '' });
 
-  // --- INITIALIZATION (DATE, THEME & SESSION) ---
+  // --- INITIALIZATION (DATE & THEME) ---
   useEffect(() => {
     const now = new Date();
     const currentDay = DAYS_OF_WEEK[now.getDay()];
@@ -107,15 +108,29 @@ export default function AcademicPlanner() {
       document.documentElement.classList.add('dark');
     }
 
-    const unlocked = localStorage.getItem('uniflow_unlocked');
-    if (unlocked === 'true') {
-      setIsUnlocked(true);
-    }
-
     const savedSemester = localStorage.getItem('uniflow_active_semester');
     if (savedSemester) {
       setActiveSemester(savedSemester);
     }
+  }, []);
+
+  // --- BACKEND 1-HOUR SESSION CHECK ---
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const res = await fetch('/api/auth', { cache: 'no-store' });
+        const data = await res.json();
+        setIsUnlocked(Boolean(data.authenticated));
+      } catch {
+        setIsUnlocked(false);
+      } finally {
+        setAuthChecking(false);
+      }
+    };
+
+    checkSession();
+    const interval = setInterval(checkSession, 30_000);
+    return () => clearInterval(interval);
   }, []);
 
   const toggleDarkMode = () => {
@@ -256,17 +271,36 @@ export default function AcademicPlanner() {
     return grouped;
   }, [courses, courseTabFilter]);
 
-  // --- PIN HANDLER ---
-  const handleUnlock = (e: React.FormEvent) => {
+  // --- BACKEND PIN & LOGOUT HANDLERS ---
+  const handleUnlock = async (e: React.FormEvent) => {
     e.preventDefault();
-    const correctPin = process.env.NEXT_PUBLIC_APP_PIN || '1234';
-    if (pinInput === correctPin) {
-      setIsUnlocked(true);
-      localStorage.setItem('uniflow_unlocked', 'true');
-      setPinError(false);
-    } else {
+    try {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin: pinInput }),
+      });
+
+      if (res.ok) {
+        setIsUnlocked(true);
+        setPinError(false);
+        setPinInput('');
+      } else {
+        setPinError(true);
+        setPinInput('');
+      }
+    } catch {
       setPinError(true);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth', { method: 'DELETE' });
+    } finally {
+      setIsUnlocked(false);
       setPinInput('');
+      setPinError(false);
     }
   };
 
@@ -308,7 +342,11 @@ export default function AcademicPlanner() {
   };
 
   const handleDeleteCourse = async (id: string) => {
-    if (!confirm('Delete this course? All routines, assessments, and attendance records linked to it will also be removed.'))
+    if (
+      !confirm(
+        'Delete this course? All routines, assessments, and attendance records linked to it will also be removed.'
+      )
+    )
       return;
     const { error } = await supabase.from('courses').delete().eq('id', id);
     if (error) alert(`Error deleting course: ${error.message}`);
@@ -492,7 +530,11 @@ export default function AcademicPlanner() {
     return visibleAssessments.filter((a) => a.type === activeTab);
   }, [visibleAssessments, activeTab, isAssessmentTab]);
 
-  // --- LOCK SCREEN ---
+  // --- AUTH LOADING & LOCK SCREEN ---
+  if (authChecking) {
+    return <div className="min-h-screen" />;
+  }
+
   if (!isUnlocked) {
     return (
       <LockScreen
@@ -515,6 +557,7 @@ export default function AcademicPlanner() {
         onSelectActiveSemester={handleSelectActiveSemester}
         darkMode={darkMode}
         onToggleDarkMode={toggleDarkMode}
+        onLogout={handleLogout}
         pendingCounts={pendingCounts}
       />
 
@@ -525,6 +568,7 @@ export default function AcademicPlanner() {
         onSelectActiveSemester={handleSelectActiveSemester}
         darkMode={darkMode}
         onToggleDarkMode={toggleDarkMode}
+        onLogout={handleLogout}
       />
 
       <main className="flex-1 md:pl-64">
