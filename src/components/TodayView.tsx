@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Clock, Plus, MapPin, User, AlertCircle, Circle } from 'lucide-react';
+import { Clock, Plus, MapPin, User, AlertCircle } from 'lucide-react';
 import {
   Assessment,
   AssessmentType,
@@ -23,7 +23,6 @@ interface TodayViewProps {
   setActiveTab: (tab: TabId) => void;
   onOpenAssessmentModal: (defaultType?: AssessmentType) => void;
   onOpenNoteModal: () => void;
-  onToggleAssessmentComplete: (item: Assessment) => void;
 }
 
 export default function TodayView({
@@ -37,7 +36,6 @@ export default function TodayView({
   setActiveTab,
   onOpenAssessmentModal,
   onOpenNoteModal,
-  onToggleAssessmentComplete,
 }: TodayViewProps) {
   return (
     <div className="space-y-8">
@@ -80,7 +78,7 @@ export default function TodayView({
               {ASSESSMENT_TAB_META[type].plural}
             </span>
             <p className="text-2xl font-bold mt-2">{pendingCounts[type]}</p>
-            <p className="text-[11px] text-slate-400 mt-0.5">Pending</p>
+            <p className="text-[11px] text-slate-400 mt-0.5">Scheduled</p>
           </button>
         ))}
       </div>
@@ -167,7 +165,7 @@ export default function TodayView({
             <div className="p-8 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 text-center">
               <p className="text-sm font-medium text-slate-600 dark:text-slate-300">All caught up!</p>
               <p className="text-xs text-slate-400 mt-1">
-                No pending quizzes, assignments, or exams.
+                No quizzes, assignments, or exams scheduled.
               </p>
             </div>
           ) : (
@@ -177,15 +175,8 @@ export default function TodayView({
                 return (
                   <div
                     key={item.id}
-                    className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 shadow-sm flex items-start gap-3.5 group"
+                    className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 shadow-sm flex items-start gap-3.5"
                   >
-                    <button
-                      onClick={() => onToggleAssessmentComplete(item)}
-                      className="mt-0.5 text-slate-400 hover:text-emerald-500 transition-colors"
-                      title="Mark as completed"
-                    >
-                      <Circle className="w-5 h-5" />
-                    </button>
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
