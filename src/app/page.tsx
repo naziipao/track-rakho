@@ -23,7 +23,11 @@ import {
   X,
   StickyNote,
   Filter,
-  Layers
+  Layers,
+  ClipboardList,
+  BookMarked,
+  Award,
+  PenTool
 } from 'lucide-react';
 
 // --- TYPES ---
@@ -46,10 +50,12 @@ interface Routine {
   courses?: Course;
 }
 
+type AssessmentType = 'Quiz' | 'Assignment' | 'Midterm' | 'Final';
+
 interface Assessment {
   id: string;
   course_id: string;
-  type: 'Quiz' | 'Assignment' | 'Midterm' | 'Final';
+  type: AssessmentType;
   title: string;
   topics: string;
   due_date: string;
@@ -64,6 +70,40 @@ interface Note {
   content: string;
   updated_at: string;
 }
+
+type TabId = 'today' | 'routine' | 'Quiz' | 'Assignment' | 'Midterm' | 'Final' | 'notes' | 'courses';
+
+const ASSESSMENT_TABS: AssessmentType[] = ['Quiz', 'Assignment', 'Midterm', 'Final'];
+
+const ASSESSMENT_TAB_META: Record<
+  AssessmentType,
+  { heading: string; plural: string; subtitle: string; buttonLabel: string }
+> = {
+  Quiz: {
+    heading: 'Quizzes',
+    plural: 'Quizzes',
+    subtitle: 'Track upcoming quiz dates, syllabus topics, and completion status.',
+    buttonLabel: 'Add Quiz',
+  },
+  Assignment: {
+    heading: 'Assignments',
+    plural: 'Assignments',
+    subtitle: 'Keep track of homework, lab reports, and submission deadlines.',
+    buttonLabel: 'Add Assignment',
+  },
+  Midterm: {
+    heading: 'Midterm Exams',
+    plural: 'Midterms',
+    subtitle: 'Your midterm exam routine, coverage topics, and countdowns.',
+    buttonLabel: 'Add Midterm',
+  },
+  Final: {
+    heading: 'Final Exams',
+    plural: 'Finals',
+    subtitle: 'Your final exam schedule, syllabus coverage, and countdowns.',
+    buttonLabel: 'Add Final',
+  },
+};
 
 const DAYS_OF_WEEK = [
   'Sunday',
@@ -94,7 +134,7 @@ export default function AcademicPlanner() {
   const [darkMode, setDarkMode] = useState<boolean>(false);
 
   // --- NAVIGATION & DATA STATE ---
-  const [activeTab, setActiveTab] = useState<'today' | 'routine' | 'assessments' | 'notes' | 'courses'>('today');
+  const [activeTab, setActiveTab] = useState<TabId>('today');
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
 
@@ -107,7 +147,6 @@ export default function AcademicPlanner() {
   const [todayName, setTodayName] = useState<string>('Sunday');
   const [todayDateLabel, setTodayDateLabel] = useState<string>('');
   const [selectedDay, setSelectedDay] = useState<string>('Sunday');
-  const [assessmentFilter, setAssessmentFilter] = useState<string>('All');
   const [showCompleted, setShowCompleted] = useState<boolean>(false);
   const [activeSemester, setActiveSemester] = useState<string>('All');
   const [courseTabFilter, setCourseTabFilter] = useState<string>('All');
@@ -132,7 +171,7 @@ export default function AcademicPlanner() {
   });
   const [assessmentForm, setAssessmentForm] = useState({
     course_id: '',
-    type: 'Quiz' as 'Quiz' | 'Assignment' | 'Midterm' | 'Final',
+    type: 'Quiz' as AssessmentType,
     title: '',
     topics: '',
     due_date: '',
@@ -182,6 +221,13 @@ export default function AcademicPlanner() {
   const handleSelectActiveSemester = (sem: string) => {
     setActiveSemester(sem);
     localStorage.setItem('uniflow_active_semester', sem);
+  };
+
+  const openAssessmentModal = (defaultType?: AssessmentType) => {
+    if (defaultType) {
+      setAssessmentForm((prev) => ({ ...prev, type: defaultType }));
+    }
+    setActiveModal('assessment');
   };
 
   // --- FETCH ALL DATA ---
@@ -446,13 +492,36 @@ export default function AcademicPlanner() {
     [visibleAssessments]
   );
 
-  const filteredAssessments = useMemo(() => {
+  const pendingCounts = useMemo(() => {
+    return {
+      Quiz: upcomingAssessments.filter((a) => a.type === 'Quiz').length,
+      Assignment: upcomingAssessments.filter((a) => a.type === 'Assignment').length,
+      Midterm: upcomingAssessments.filter((a) => a.type === 'Midterm').length,
+      Final: upcomingAssessments.filter((a) => a.type === 'Final').length,
+    };
+  }, [upcomingAssessments]);
+
+  const isAssessmentTab = ASSESSMENT_TABS.includes(activeTab as AssessmentType);
+
+  const currentTabAssessments = useMemo(() => {
+    if (!isAssessmentTab) return [];
     return visibleAssessments.filter((a) => {
-      const matchesType = assessmentFilter === 'All' || a.type === assessmentFilter;
+      const matchesType = a.type === activeTab;
       const matchesStatus = showCompleted ? true : !a.is_completed;
       return matchesType && matchesStatus;
     });
-  }, [visibleAssessments, assessmentFilter, showCompleted]);
+  }, [visibleAssessments, activeTab, isAssessmentTab, showCompleted]);
+
+  const navItems: { id: TabId; label: string; mobileLabel: string; icon: React.ComponentType<{ className?: string }>; count?: number }[] = [
+    { id: 'today', label: 'Today & Overview', mobileLabel: 'Today', icon: LayoutDashboard },
+    { id: 'routine', label: 'Weekly Routine', mobileLabel: 'Routine', icon: Calendar },
+    { id: 'Quiz', label: 'Quizzes', mobileLabel: 'Quizzes', icon: PenTool, count: pendingCounts.Quiz },
+    { id: 'Assignment', label: 'Assignments', mobileLabel: 'Tasks', icon: ClipboardList, count: pendingCounts.Assignment },
+    { id: 'Midterm', label: 'Midterms', mobileLabel: 'Midterm', icon: BookMarked, count: pendingCounts.Midterm },
+    { id: 'Final', label: 'Finals', mobileLabel: 'Final', icon: Award, count: pendingCounts.Final },
+    { id: 'notes', label: 'Quick Notes', mobileLabel: 'Notes', icon: StickyNote },
+    { id: 'courses', label: 'My Courses', mobileLabel: 'Courses', icon: BookOpen },
+  ];
 
   // --- LOCK SCREEN UI ---
   if (!isUnlocked) {
@@ -527,21 +596,15 @@ export default function AcademicPlanner() {
           </div>
         )}
 
-        <nav className="flex-1 px-4 space-y-1.5 mt-1">
-          {[
-            { id: 'today', label: 'Today & Overview', icon: LayoutDashboard },
-            { id: 'routine', label: 'Weekly Routine', icon: Calendar },
-            { id: 'assessments', label: 'Quizzes & Exams', icon: FileText, count: upcomingAssessments.length },
-            { id: 'notes', label: 'Quick Notes', icon: StickyNote },
-            { id: 'courses', label: 'My Courses', icon: BookOpen },
-          ].map((item) => {
+        <nav className="flex-1 px-4 space-y-1 mt-1 overflow-y-auto">
+          {navItems.map((item) => {
             const Icon = item.icon;
             const active = activeTab === item.id;
             return (
               <button
                 key={item.id}
-                onClick={() => setActiveTab(item.id as typeof activeTab)}
-                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                onClick={() => setActiveTab(item.id)}
+                className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
                   active
                     ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20'
                     : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/70'
@@ -652,7 +715,7 @@ export default function AcademicPlanner() {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <button
-                    onClick={() => setActiveModal('assessment')}
+                    onClick={() => openAssessmentModal('Quiz')}
                     disabled={activeCourses.length === 0}
                     className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white text-xs sm:text-sm font-medium flex items-center gap-1.5 shadow-sm transition-all"
                   >
@@ -665,6 +728,23 @@ export default function AcademicPlanner() {
                     <Plus className="w-4 h-4" /> Quick Note
                   </button>
                 </div>
+              </div>
+
+              {/* Quick Category Summary Cards */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {ASSESSMENT_TABS.map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => setActiveTab(type)}
+                    className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 hover:border-indigo-400 dark:hover:border-indigo-500 text-left transition-all shadow-sm"
+                  >
+                    <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md ${getTypeBadgeColor(type)}`}>
+                      {ASSESSMENT_TAB_META[type].plural}
+                    </span>
+                    <p className="text-2xl font-bold mt-2">{pendingCounts[type]}</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Pending</p>
+                  </button>
+                ))}
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -734,7 +814,7 @@ export default function AcademicPlanner() {
                       Upcoming Deadlines & Exams
                     </h3>
                     <button
-                      onClick={() => setActiveTab('assessments')}
+                      onClick={() => setActiveTab(upcomingAssessments[0]?.type || 'Quiz')}
                       className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
                     >
                       View All ({upcomingAssessments.length}) →
@@ -771,9 +851,12 @@ export default function AcademicPlanner() {
                                   >
                                     {item.courses?.code}
                                   </span>
-                                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-md ${getTypeBadgeColor(item.type)}`}>
+                                  <button
+                                    onClick={() => setActiveTab(item.type)}
+                                    className={`text-xs font-semibold px-2 py-0.5 rounded-md ${getTypeBadgeColor(item.type)}`}
+                                  >
                                     {item.type}
-                                  </span>
+                                  </button>
                                   <span className="font-semibold text-sm">{item.title}</span>
                                 </div>
                                 <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${countdown.style}`}>
@@ -918,42 +1001,34 @@ export default function AcademicPlanner() {
           )}
 
           {/* ========================================================= */}
-          {/* TAB 3: ASSESSMENTS (QUIZZES, ASSIGNMENTS, MIDS, FINALS)   */}
+          {/* TABS 3–6: SEPARATE QUIZ, ASSIGNMENT, MIDTERM, FINAL TABS  */}
           {/* ========================================================= */}
-          {activeTab === 'assessments' && (
+          {isAssessmentTab && (
             <div className="space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-2xl font-bold tracking-tight">Quizzes, Assignments & Exams</h2>
+                  <h2 className="text-2xl font-bold tracking-tight">
+                    {ASSESSMENT_TAB_META[activeTab as AssessmentType].heading}
+                  </h2>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    Track topics, deadlines, midterms, and final exam schedules.
+                    {ASSESSMENT_TAB_META[activeTab as AssessmentType].subtitle}
                   </p>
                 </div>
                 <button
-                  onClick={() => setActiveModal('assessment')}
+                  onClick={() => openAssessmentModal(activeTab as AssessmentType)}
                   disabled={activeCourses.length === 0}
                   className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white text-sm font-medium flex items-center justify-center gap-1.5 shadow-sm"
                 >
-                  <Plus className="w-4 h-4" /> Add New Entry
+                  <Plus className="w-4 h-4" /> {ASSESSMENT_TAB_META[activeTab as AssessmentType].buttonLabel}
                 </button>
               </div>
 
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex gap-1.5 overflow-x-auto pb-1">
-                  {['All', 'Quiz', 'Assignment', 'Midterm', 'Final'].map((type) => (
-                    <button
-                      key={type}
-                      onClick={() => setAssessmentFilter(type)}
-                      className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                        assessmentFilter === type
-                          ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
-                          : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800'
-                      }`}
-                    >
-                      {type === 'All' ? 'All Items' : `${type}s`}
-                    </button>
-                  ))}
-                </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                  Showing {currentTabAssessments.length}{' '}
+                  {currentTabAssessments.length === 1 ? 'item' : 'items'}
+                  {activeSemester !== 'All' && ` in ${activeSemester}`}
+                </span>
                 <button
                   onClick={() => setShowCompleted(!showCompleted)}
                   className="text-xs font-medium flex items-center gap-1.5 text-slate-600 dark:text-slate-400 hover:text-indigo-600"
@@ -963,13 +1038,18 @@ export default function AcademicPlanner() {
                 </button>
               </div>
 
-              {filteredAssessments.length === 0 ? (
+              {currentTabAssessments.length === 0 ? (
                 <div className="p-12 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 text-center">
-                  <p className="text-sm font-medium text-slate-600 dark:text-slate-300">No items match this filter.</p>
+                  <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                    No {ASSESSMENT_TAB_META[activeTab as AssessmentType].plural.toLowerCase()} added yet.
+                  </p>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Click &ldquo;{ASSESSMENT_TAB_META[activeTab as AssessmentType].buttonLabel}&rdquo; above to add one.
+                  </p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {filteredAssessments.map((item) => {
+                  {currentTabAssessments.map((item) => {
                     const countdown = getCountdownBadge(item.due_date);
                     return (
                       <div
@@ -1048,7 +1128,7 @@ export default function AcademicPlanner() {
           )}
 
           {/* ========================================================= */}
-          {/* TAB 4: QUICK NOTES                                        */}
+          {/* TAB 7: QUICK NOTES                                        */}
           {/* ========================================================= */}
           {activeTab === 'notes' && (
             <div className="space-y-6">
@@ -1107,7 +1187,7 @@ export default function AcademicPlanner() {
           )}
 
           {/* ========================================================= */}
-          {/* TAB 5: MY COURSES (GROUPED BY SEMESTER)                   */}
+          {/* TAB 8: MY COURSES (GROUPED BY SEMESTER)                   */}
           {/* ========================================================= */}
           {activeTab === 'courses' && (
             <div className="space-y-6">
@@ -1225,29 +1305,28 @@ export default function AcademicPlanner() {
         </div>
       </main>
 
-      {/* MOBILE BOTTOM NAVIGATION BAR */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg border-t border-slate-200/80 dark:border-slate-800/80 z-30 px-2 py-1.5 flex justify-around">
-        {[
-          { id: 'today', label: 'Today', icon: LayoutDashboard },
-          { id: 'routine', label: 'Routine', icon: Calendar },
-          { id: 'assessments', label: 'Exams/Tasks', icon: FileText },
-          { id: 'notes', label: 'Notes', icon: StickyNote },
-          { id: 'courses', label: 'Courses', icon: BookOpen },
-        ].map((item) => {
+      {/* MOBILE BOTTOM NAVIGATION BAR (HORIZONTALLY SCROLLABLE FOR ALL TABS) */}
+      <nav className="md:hidden fixed bottom-0 inset-x-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg border-t border-slate-200/80 dark:border-slate-800/80 z-30 px-2 py-1.5 flex items-center gap-1 overflow-x-auto">
+        {navItems.map((item) => {
           const Icon = item.icon;
           const active = activeTab === item.id;
           return (
             <button
               key={item.id}
-              onClick={() => setActiveTab(item.id as typeof activeTab)}
-              className={`flex flex-col items-center justify-center py-1.5 px-2.5 rounded-xl text-[11px] font-medium transition-colors ${
+              onClick={() => setActiveTab(item.id)}
+              className={`relative shrink-0 flex flex-col items-center justify-center py-1.5 px-3 rounded-xl text-[11px] font-medium transition-colors ${
                 active
-                  ? 'text-indigo-600 dark:text-indigo-400'
+                  ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50/70 dark:bg-indigo-950/50'
                   : 'text-slate-500 dark:text-slate-400'
               }`}
             >
               <Icon className={`w-5 h-5 mb-0.5 ${active ? 'stroke-[2.5]' : ''}`} />
-              {item.label}
+              <span>{item.mobileLabel}</span>
+              {item.count !== undefined && item.count > 0 && (
+                <span className="absolute top-1 right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-indigo-600 text-white text-[9px] font-bold flex items-center justify-center">
+                  {item.count}
+                </span>
+              )}
             </button>
           );
         })}
@@ -1263,7 +1342,7 @@ export default function AcademicPlanner() {
               <h3 className="font-bold text-lg">
                 {activeModal === 'course' && 'Add Course to Semester'}
                 {activeModal === 'routine' && 'Add Class to Routine'}
-                {activeModal === 'assessment' && 'Add Quiz / Exam / Assignment'}
+                {activeModal === 'assessment' && `Add ${assessmentForm.type}`}
                 {activeModal === 'note' && 'Create Quick Note'}
               </h3>
               <button
@@ -1452,7 +1531,7 @@ export default function AcademicPlanner() {
                       onChange={(e) =>
                         setAssessmentForm({
                           ...assessmentForm,
-                          type: e.target.value as 'Quiz' | 'Assignment' | 'Midterm' | 'Final',
+                          type: e.target.value as AssessmentType,
                         })
                       }
                       className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm"
@@ -1500,7 +1579,7 @@ export default function AcademicPlanner() {
                   disabled={saving}
                   className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold text-sm mt-2"
                 >
-                  {saving ? 'Saving...' : 'Save Entry'}
+                  {saving ? 'Saving...' : `Save ${assessmentForm.type}`}
                 </button>
               </form>
             )}
