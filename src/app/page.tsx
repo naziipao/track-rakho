@@ -53,7 +53,6 @@ export default function AcademicPlanner() {
   const [todayName, setTodayName] = useState<string>('Sunday');
   const [todayDateLabel, setTodayDateLabel] = useState<string>('');
   const [selectedDay, setSelectedDay] = useState<string>('Sunday');
-  const [showCompleted, setShowCompleted] = useState<boolean>(false);
   const [activeSemester, setActiveSemester] = useState<string>('All');
   const [courseTabFilter, setCourseTabFilter] = useState<string>('All');
 
@@ -353,13 +352,6 @@ export default function AcademicPlanner() {
     fetchAllData();
   };
 
-  const toggleAssessmentComplete = async (item: Assessment) => {
-    await supabase.from('assessments').update({ is_completed: !item.is_completed }).eq('id', item.id);
-    setAssessments((prev) =>
-      prev.map((a) => (a.id === item.id ? { ...a, is_completed: !a.is_completed } : a))
-    );
-  };
-
   const handleDeleteAssessment = async (id: string) => {
     await supabase.from('assessments').delete().eq('id', id);
     fetchAllData();
@@ -401,31 +393,22 @@ export default function AcademicPlanner() {
     [visibleRoutines, todayName]
   );
 
-  const upcomingAssessments = useMemo(
-    () => visibleAssessments.filter((a) => !a.is_completed),
-    [visibleAssessments]
-  );
-
   const pendingCounts = useMemo(
     () => ({
-      Quiz: upcomingAssessments.filter((a) => a.type === 'Quiz').length,
-      Assignment: upcomingAssessments.filter((a) => a.type === 'Assignment').length,
-      Midterm: upcomingAssessments.filter((a) => a.type === 'Midterm').length,
-      Final: upcomingAssessments.filter((a) => a.type === 'Final').length,
+      Quiz: visibleAssessments.filter((a) => a.type === 'Quiz').length,
+      Assignment: visibleAssessments.filter((a) => a.type === 'Assignment').length,
+      Midterm: visibleAssessments.filter((a) => a.type === 'Midterm').length,
+      Final: visibleAssessments.filter((a) => a.type === 'Final').length,
     }),
-    [upcomingAssessments]
+    [visibleAssessments]
   );
 
   const isAssessmentTab = ASSESSMENT_TABS.includes(activeTab as AssessmentType);
 
   const currentTabAssessments = useMemo(() => {
     if (!isAssessmentTab) return [];
-    return visibleAssessments.filter((a) => {
-      const matchesType = a.type === activeTab;
-      const matchesStatus = showCompleted ? true : !a.is_completed;
-      return matchesType && matchesStatus;
-    });
-  }, [visibleAssessments, activeTab, isAssessmentTab, showCompleted]);
+    return visibleAssessments.filter((a) => a.type === activeTab);
+  }, [visibleAssessments, activeTab, isAssessmentTab]);
 
   // --- LOCK SCREEN ---
   if (!isUnlocked) {
@@ -491,11 +474,10 @@ export default function AcademicPlanner() {
               activeCoursesCount={activeCourses.length}
               pendingCounts={pendingCounts}
               todaysClasses={todaysClasses}
-              upcomingAssessments={upcomingAssessments}
+              upcomingAssessments={visibleAssessments}
               setActiveTab={setActiveTab}
               onOpenAssessmentModal={openAssessmentModal}
               onOpenNoteModal={() => setActiveModal('note')}
-              onToggleAssessmentComplete={toggleAssessmentComplete}
             />
           )}
 
@@ -520,11 +502,8 @@ export default function AcademicPlanner() {
               assessments={currentTabAssessments}
               activeSemester={activeSemester}
               activeCoursesCount={activeCourses.length}
-              showCompleted={showCompleted}
-              setShowCompleted={setShowCompleted}
               onOpenAddAssessment={openAssessmentModal}
               onEditAssessment={openEditAssessmentModal}
-              onToggleComplete={toggleAssessmentComplete}
               onDeleteAssessment={handleDeleteAssessment}
             />
           )}
