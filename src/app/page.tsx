@@ -7,6 +7,7 @@ import {
   Assessment,
   AssessmentType,
   ASSESSMENT_TABS,
+  Attendance,
   Course,
   COURSE_COLORS,
   DAYS_OF_WEEK,
@@ -20,6 +21,7 @@ import { Sidebar, MobileHeader, MobileBottomNav } from '@/components/Sidebar';
 import TodayView from '@/components/TodayView';
 import RoutineView from '@/components/RoutineView';
 import AssessmentView from '@/components/AssessmentView';
+import AttendanceView from '@/components/AttendanceView';
 import NotesView from '@/components/NotesView';
 import CoursesView from '@/components/CoursesView';
 import Modals from '@/components/Modals';
@@ -47,6 +49,7 @@ export default function AcademicPlanner() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [routines, setRoutines] = useState<Routine[]>([]);
   const [assessments, setAssessments] = useState<Assessment[]>([]);
+  const [attendances, setAttendances] = useState<Attendance[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
 
   // --- DATE & FILTERS ---
@@ -167,25 +170,37 @@ export default function AcademicPlanner() {
   const fetchAllData = async () => {
     setLoading(true);
     try {
-      const [coursesRes, routinesRes, assessmentsRes, notesRes] = await Promise.all([
-        supabase.from('courses').select('*').order('code', { ascending: true }),
-        supabase.from('routines').select('*, courses(*)').order('start_time', { ascending: true }),
-        supabase.from('assessments').select('*, courses(*)').order('due_date', { ascending: true }),
-        supabase.from('notes').select('*').order('updated_at', { ascending: false }),
-      ]);
+      const [coursesRes, routinesRes, assessmentsRes, notesRes, attendancesRes] =
+        await Promise.all([
+          supabase.from('courses').select('*').order('code', { ascending: true }),
+          supabase.from('routines').select('*, courses(*)').order('start_time', { ascending: true }),
+          supabase.from('assessments').select('*, courses(*)').order('due_date', { ascending: true }),
+          supabase.from('notes').select('*').order('updated_at', { ascending: false }),
+          supabase
+            .from('attendances')
+            .select('*, courses(*)')
+            .order('missed_date', { ascending: false }),
+        ]);
 
       if (coursesRes.error) console.error('Courses fetch error:', coursesRes.error);
 
       if (coursesRes.data) {
         setCourses(coursesRes.data);
         if (coursesRes.data.length > 0) {
-          setRoutineForm((prev) => ({ ...prev, course_id: prev.course_id || coursesRes.data[0].id }));
-          setAssessmentForm((prev) => ({ ...prev, course_id: prev.course_id || coursesRes.data[0].id }));
+          setRoutineForm((prev) => ({
+            ...prev,
+            course_id: prev.course_id || coursesRes.data[0].id,
+          }));
+          setAssessmentForm((prev) => ({
+            ...prev,
+            course_id: prev.course_id || coursesRes.data[0].id,
+          }));
         }
       }
       if (routinesRes.data) setRoutines(routinesRes.data);
       if (assessmentsRes.data) setAssessments(assessmentsRes.data);
       if (notesRes.data) setNotes(notesRes.data);
+      if (attendancesRes.data) setAttendances(attendancesRes.data);
     } catch (error) {
       console.error('Error fetching planner data:', error);
     } finally {
@@ -293,7 +308,8 @@ export default function AcademicPlanner() {
   };
 
   const handleDeleteCourse = async (id: string) => {
-    if (!confirm('Delete this course? All routines and assessments linked to it will also be removed.')) return;
+    if (!confirm('Delete this course? All routines, assessments, and attendance records linked to it will also be removed.'))
+      return;
     const { error } = await supabase.from('courses').delete().eq('id', id);
     if (error) alert(`Error deleting course: ${error.message}`);
     fetchAllData();
@@ -357,6 +373,67 @@ export default function AcademicPlanner() {
     fetchAllData();
   };
 
+  const handleAddAttendance = async (payload: {
+    course_id: string;
+    missed_date: string;
+    note: string;
+  }) => {
+    setSaving(true);
+    const { error } = await supabase.from('attendances').insert([
+      {
+        course_id: payload.course_id,
+        missed_date: payload.missed_date,
+        note: payload.note || null,
+      },
+    ]);
+    setSaving(false);
+    if (error) {
+      alert(`Could not save missed class: ${error.message}`);
+      return false;
+    }
+    await fetchAllData();
+    return true;
+  };
+
+  const handleUpdateAttendance = async (
+    id: string,
+    payload: { course_id: string; missed_date: string; note: string }
+  ) => {
+    setSaving(true);
+    const { error } = await supabase
+      .from('attendances')
+      .update({
+        course_id: payload.course_id,
+        missed_date: payload.missed_date,
+        note: payload.note || null,
+      })
+      .eq('id', id);
+    setSaving(false);
+    if (error) {
+      alert(`Could not update entry: ${error.message}`);
+      return false;
+    }
+    await fetchAllData();
+    return true;
+  };
+
+  const handleDeleteAttendance = async (id: string) => {
+    await supabase.from('attendances').delete().eq('id', id);
+    await fetchAllData();
+  };
+
+  const handleUpdateCourseTotalClasses = async (courseId: string, totalClasses: number) => {
+    const { error } = await supabase
+      .from('courses')
+      .update({ total_classes: totalClasses })
+      .eq('id', courseId);
+    if (error) {
+      alert(`Could not update total classes: ${error.message}`);
+      return;
+    }
+    await fetchAllData();
+  };
+
   const handleAddNote = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!noteForm.title.trim() || !noteForm.content.trim()) return;
@@ -387,6 +464,11 @@ export default function AcademicPlanner() {
     if (activeSemester === 'All') return assessments;
     return assessments.filter((a) => a.courses?.semester === activeSemester);
   }, [assessments, activeSemester]);
+
+  const visibleAttendances = useMemo(() => {
+    if (activeSemester === 'All') return attendances;
+    return attendances.filter((a) => a.courses?.semester === activeSemester);
+  }, [attendances, activeSemester]);
 
   const todaysClasses = useMemo(
     () => visibleRoutines.filter((r) => r.day_of_week === todayName),
@@ -449,18 +531,18 @@ export default function AcademicPlanner() {
         <div className="max-w-5xl mx-auto p-4 sm:p-6 md:p-8">
           {/* SETUP PROMPT IF NO COURSES EXIST YET */}
           {!loading && courses.length === 0 && (
-            <div className="mb-6 p-6 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="mb-6 p-6 rounded-2xl bg-gradient-to-r from-teal-600 to-emerald-600 text-white shadow-xl shadow-teal-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2 font-bold text-lg">
                   <Sparkles className="w-5 h-5" /> Welcome to Track Rakho!
                 </div>
-                <p className="text-indigo-100 text-sm mt-1">
+                <p className="text-teal-50 text-sm mt-1">
                   Start by adding your semester name and courses (code, title, and faculty initials).
                 </p>
               </div>
               <button
                 onClick={() => setActiveModal('course')}
-                className="shrink-0 px-4 py-2.5 rounded-xl bg-white text-indigo-700 font-semibold text-sm shadow-md hover:bg-indigo-50 transition-colors"
+                className="btn-tactile shrink-0 px-4 py-2.5 rounded-xl bg-white text-teal-700 font-semibold text-sm shadow-md hover:bg-teal-50"
               >
                 + Add First Course
               </button>
@@ -504,6 +586,19 @@ export default function AcademicPlanner() {
               onOpenAddAssessment={openAssessmentModal}
               onEditAssessment={openEditAssessmentModal}
               onDeleteAssessment={handleDeleteAssessment}
+            />
+          )}
+
+          {activeTab === 'attendance' && (
+            <AttendanceView
+              courses={activeCourses}
+              attendances={visibleAttendances}
+              activeSemester={activeSemester}
+              saving={saving}
+              onAddAttendance={handleAddAttendance}
+              onUpdateAttendance={handleUpdateAttendance}
+              onDeleteAttendance={handleDeleteAttendance}
+              onUpdateCourseTotalClasses={handleUpdateCourseTotalClasses}
             />
           )}
 

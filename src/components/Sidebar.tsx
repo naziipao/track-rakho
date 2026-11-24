@@ -12,6 +12,7 @@ import {
   BookMarked,
   Award,
   PenTool,
+  UserCheck,
 } from 'lucide-react';
 import { AssessmentType, TabId } from '@/lib/types';
 
@@ -33,6 +34,7 @@ const getNavItems = (pendingCounts: Record<AssessmentType, number>) => [
   { id: 'Assignment' as TabId, label: 'Assignments', mobileLabel: 'Tasks', icon: ClipboardList, count: pendingCounts.Assignment },
   { id: 'Midterm' as TabId, label: 'Midterms', mobileLabel: 'Midterm', icon: BookMarked, count: pendingCounts.Midterm },
   { id: 'Final' as TabId, label: 'Finals', mobileLabel: 'Final', icon: Award, count: pendingCounts.Final },
+  { id: 'attendance' as TabId, label: 'Attendance', mobileLabel: 'Attend', icon: UserCheck },
   { id: 'notes' as TabId, label: 'Quick Notes', mobileLabel: 'Notes', icon: StickyNote },
   { id: 'courses' as TabId, label: 'My Courses', mobileLabel: 'Courses', icon: BookOpen },
 ];
