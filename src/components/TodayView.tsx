@@ -172,6 +172,7 @@ export default function TodayView({
             <div className="space-y-3">
               {upcomingAssessments.slice(0, 6).map((item) => {
                 const countdown = getCountdownBadge(item.due_date);
+                const isExam = item.type === 'Midterm' || item.type === 'Final';
                 return (
                   <div
                     key={item.id}
@@ -179,27 +180,43 @@ export default function TodayView({
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <span
-                            className="text-xs font-bold px-2 py-0.5 rounded-md text-white"
-                            style={{ backgroundColor: item.courses?.color || '#6366f1' }}
-                          >
-                            {item.courses?.code}
-                          </span>
+                        <div className="flex items-center gap-2 flex-wrap">
                           <button
                             onClick={() => setActiveTab(item.type)}
-                            className={`text-xs font-semibold px-2 py-0.5 rounded-md ${getTypeBadgeColor(item.type)}`}
+                            className={`text-xs font-semibold px-2.5 py-0.5 rounded-md ${getTypeBadgeColor(item.type)}`}
                           >
                             {item.type}
                           </button>
-                          <span className="font-semibold text-sm">{item.title}</span>
+                          {!isExam && item.title && (
+                            <span className="text-xs font-medium px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                              {item.title}
+                            </span>
+                          )}
+                          {item.room && (
+                            <span className="text-xs font-medium px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center gap-1">
+                              <MapPin className="w-3 h-3" />
+                              {item.room}
+                            </span>
+                          )}
                         </div>
                         <span
-                          className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${countdown.style}`}
+                          className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border shrink-0 ${countdown.style}`}
                         >
                           {countdown.label}
                         </span>
                       </div>
+
+                      <h4 className="font-bold text-sm mt-2 flex items-center gap-2">
+                        <span
+                          className="w-2 h-2 rounded-full shrink-0"
+                          style={{ backgroundColor: item.courses?.color || '#6366f1' }}
+                        />
+                        <span>
+                          {item.courses?.code}
+                          {item.courses?.name ? `: ${item.courses.name}` : ''}
+                        </span>
+                      </h4>
+
                       {item.topics && (
                         <p className="text-xs text-slate-600 dark:text-slate-400 mt-1.5">
                           <span className="font-medium text-slate-700 dark:text-slate-300">

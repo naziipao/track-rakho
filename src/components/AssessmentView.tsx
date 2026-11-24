@@ -62,6 +62,7 @@ export default function AssessmentView({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {assessments.map((item) => {
             const countdown = getCountdownBadge(item.due_date);
+            const isExam = item.type === 'Midterm' || item.type === 'Final';
             return (
               <div
                 key={item.id}
@@ -71,16 +72,15 @@ export default function AssessmentView({
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span
-                        className="text-xs font-bold px-2.5 py-0.5 rounded-md text-white"
-                        style={{ backgroundColor: item.courses?.color || '#6366f1' }}
-                      >
-                        {item.courses?.code}
-                      </span>
-                      <span
                         className={`text-xs font-semibold px-2.5 py-0.5 rounded-md ${getTypeBadgeColor(item.type)}`}
                       >
                         {item.type}
                       </span>
+                      {!isExam && item.title && (
+                        <span className="text-xs font-medium px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                          {item.title}
+                        </span>
+                      )}
                       {item.room && (
                         <span className="text-xs font-medium px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center gap-1">
                           <MapPin className="w-3 h-3" />
@@ -95,7 +95,16 @@ export default function AssessmentView({
                     </span>
                   </div>
 
-                  <h3 className="font-bold text-base mt-3">{item.title}</h3>
+                  <h3 className="font-bold text-base mt-3 flex items-center gap-2">
+                    <span
+                      className="w-2.5 h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: item.courses?.color || '#6366f1' }}
+                    />
+                    <span>
+                      {item.courses?.code}
+                      {item.courses?.name ? `: ${item.courses.name}` : ''}
+                    </span>
+                  </h3>
 
                   {item.topics && (
                     <p className="text-xs text-slate-600 dark:text-slate-400 mt-1.5 leading-relaxed">
