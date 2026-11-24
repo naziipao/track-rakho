@@ -5,8 +5,8 @@ export const metadata: Metadata = {
   title: 'Track Rakho',
   description: 'Personal Academic Planner',
   icons: {
-    apple: '/logo.png',
-  },
+      apple: [{ url: '/logo.png?v=2', sizes: '180x180', type: 'image/png' }],
+    },
   appleWebApp: {
     capable: true,
     title: 'Track Rakho',
