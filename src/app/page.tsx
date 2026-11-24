@@ -1506,42 +1506,22 @@ export default function AcademicPlanner() {
               </form>
             )}
 
-            {/* MODAL 3: ADD ASSESSMENT */}
+{/* MODAL 3: ADD ASSESSMENT */}
             {activeModal === 'assessment' && (
               <form onSubmit={handleAddAssessment} className="space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold mb-1">Course</label>
-                    <select
-                      value={assessmentForm.course_id}
-                      onChange={(e) => setAssessmentForm({ ...assessmentForm, course_id: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm"
-                    >
-                      {activeCourses.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.code}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold mb-1">Category</label>
-                    <select
-                      value={assessmentForm.type}
-                      onChange={(e) =>
-                        setAssessmentForm({
-                          ...assessmentForm,
-                          type: e.target.value as AssessmentType,
-                        })
-                      }
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm"
-                    >
-                      <option value="Quiz">Quiz</option>
-                      <option value="Assignment">Assignment</option>
-                      <option value="Midterm">Midterm Exam</option>
-                      <option value="Final">Final Exam</option>
-                    </select>
-                  </div>
+                <div>
+                  <label className="block text-xs font-semibold mb-1">Course</label>
+                  <select
+                    value={assessmentForm.course_id}
+                    onChange={(e) => setAssessmentForm({ ...assessmentForm, course_id: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm"
+                  >
+                    {activeCourses.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.code}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold mb-1">Title / Number</label>
