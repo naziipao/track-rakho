@@ -23,6 +23,19 @@ interface TodayViewProps {
   onOpenNoteModal: () => void;
 }
 
+const getCardGlowStyle = (type: AssessmentType) => {
+  switch (type) {
+    case 'Quiz':
+      return 'border-cyan-500/35 dark:border-cyan-400/35 shadow-[0_0_24px_-4px_rgba(34,211,238,0.18)] dark:shadow-[0_0_28px_-4px_rgba(34,211,238,0.22)] hover:border-cyan-400/75 dark:hover:border-cyan-300/70 hover:shadow-[0_0_36px_-2px_rgba(34,211,238,0.34)]';
+    case 'Assignment':
+      return 'border-emerald-500/35 dark:border-emerald-400/35 shadow-[0_0_24px_-4px_rgba(16,185,129,0.18)] dark:shadow-[0_0_28px_-4px_rgba(52,211,153,0.22)] hover:border-emerald-400/75 dark:hover:border-emerald-300/70 hover:shadow-[0_0_36px_-2px_rgba(52,211,153,0.34)]';
+    case 'Midterm':
+      return 'border-amber-500/40 dark:border-amber-400/35 shadow-[0_0_24px_-4px_rgba(245,158,11,0.18)] dark:shadow-[0_0_28px_-4px_rgba(251,191,36,0.22)] hover:border-amber-400/80 dark:hover:border-amber-300/75 hover:shadow-[0_0_36px_-2px_rgba(251,191,36,0.34)]';
+    case 'Final':
+      return 'border-rose-500/35 dark:border-rose-400/35 shadow-[0_0_24px_-4px_rgba(244,63,94,0.18)] dark:shadow-[0_0_28px_-4px_rgba(251,113,133,0.22)] hover:border-rose-400/75 dark:hover:border-rose-300/70 hover:shadow-[0_0_36px_-2px_rgba(251,113,133,0.34)]';
+  }
+};
+
 export default function TodayView({
   todayDateLabel,
   todayName,
@@ -61,12 +74,17 @@ export default function TodayView({
           <button
             key={type}
             onClick={() => setActiveTab(type)}
-            className="btn-tactile card-surface card-interactive p-4 rounded-2xl text-left group"
+            className={`btn-tactile relative overflow-hidden p-4 rounded-2xl bg-white/90 dark:bg-[#11131a]/90 backdrop-blur-xl border ring-1 ring-inset ring-white/60 dark:ring-white/[0.08] transition-all duration-200 hover:-translate-y-0.5 text-left group ${getCardGlowStyle(type)}`}
           >
+            {/* Top-edge specular light reflection */}
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-white/70 dark:via-white/30 to-transparent"
+            />
             <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md ${getTypeBadgeColor(type)}`}>
               {ASSESSMENT_TAB_META[type].plural}
             </span>
-            <p className="text-2xl font-bold mt-2.5 group-hover:text-teal-600 dark:group-hover:text-teal-300 transition-colors">
+            <p className="text-2xl font-bold mt-2.5 transition-colors">
               {pendingCounts[type]}
             </p>
             <p className="text-[11px] text-stone-400 dark:text-zinc-500 mt-0.5">Scheduled</p>
@@ -91,7 +109,7 @@ export default function TodayView({
           </div>
 
           {todaysClasses.length === 0 ? (
-            <div className="p-8 rounded-2xl card-surface text-center">
+            <div className="p-8 rounded-2xl card-surface border-teal-500/25 dark:border-teal-400/25 shadow-[0_0_24px_-4px_rgba(20,184,166,0.14)] text-center">
               <p className="text-sm font-medium text-stone-600 dark:text-zinc-300">
                 No classes scheduled today 🎉
               </p>
@@ -104,7 +122,7 @@ export default function TodayView({
               {todaysClasses.map((cls) => (
                 <div
                   key={cls.id}
-                  className="p-4 rounded-2xl card-surface card-interactive flex items-start gap-3.5 relative overflow-hidden"
+                  className="p-4 rounded-2xl card-surface card-interactive border-teal-500/30 dark:border-teal-400/30 shadow-[0_0_24px_-4px_rgba(20,184,166,0.18)] flex items-start gap-3.5 relative overflow-hidden"
                 >
                   <div
                     className="w-1.5 self-stretch rounded-full shrink-0 shadow-sm"
@@ -167,8 +185,14 @@ export default function TodayView({
                 return (
                   <div
                     key={item.id}
-                    className="p-4 rounded-2xl card-surface card-interactive flex items-start gap-3.5"
+                    className={`relative overflow-hidden p-4 rounded-2xl bg-white/90 dark:bg-[#11131a]/90 backdrop-blur-xl border ring-1 ring-inset ring-white/60 dark:ring-white/[0.08] transition-all duration-200 hover:-translate-y-0.5 flex items-start gap-3.5 ${getCardGlowStyle(item.type)}`}
                   >
+                    {/* Top-edge specular light reflection */}
+                    <div
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-white/70 dark:via-white/30 to-transparent"
+                    />
+
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div className="flex items-center gap-2 flex-wrap">
