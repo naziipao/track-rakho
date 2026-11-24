@@ -26,6 +26,9 @@ import NotesView from '@/components/NotesView';
 import CoursesView from '@/components/CoursesView';
 import Modals from '@/components/Modals';
 
+const DATA_CACHE_KEY = 'uniflow_data_cache_v1';
+const SESSION_HINT_KEY = 'uniflow_session_hint';
+
 const toDateTimeLocal = (isoString: string) => {
   const d = new Date(isoString);
   const pad = (n: number) => String(n).padStart(2, '0');
@@ -88,7 +91,7 @@ export default function AcademicPlanner() {
   });
   const [noteForm, setNoteForm] = useState({ course_code: 'General', title: '', content: '' });
 
-  // --- INITIALIZATION (DATE & THEME) ---
+  // --- INITIALIZATION (DATE, THEME & INSTANT CACHE HYDRATION) ---
   useEffect(() => {
     const now = new Date();
     const currentDay = DAYS_OF_WEEK[now.getDay()];
@@ -112,6 +115,40 @@ export default function AcademicPlanner() {
     if (savedSemester) {
       setActiveSemester(savedSemester);
     }
+
+    // Hydrate cached planner data immediately so reloads don't feel slow
+    try {
+      const cachedRaw = localStorage.getItem(DATA_CACHE_KEY);
+      if (cachedRaw) {
+        const cached = JSON.parse(cachedRaw);
+        if (Array.isArray(cached.courses)) {
+          setCourses(cached.courses);
+          if (cached.courses.length > 0) {
+            setRoutineForm((prev) => ({
+              ...prev,
+              course_id: prev.course_id || cached.courses[0].id,
+            }));
+            setAssessmentForm((prev) => ({
+              ...prev,
+              course_id: prev.course_id || cached.courses[0].id,
+            }));
+          }
+        }
+        if (Array.isArray(cached.routines)) setRoutines(cached.routines);
+        if (Array.isArray(cached.assessments)) setAssessments(cached.assessments);
+        if (Array.isArray(cached.notes)) setNotes(cached.notes);
+        if (Array.isArray(cached.attendances)) setAttendances(cached.attendances);
+        setLoading(false);
+      }
+    } catch {
+      // Ignore malformed cache
+    }
+
+    // If unlocked in this browser session, render immediately while /api/auth verifies in background
+    if (sessionStorage.getItem(SESSION_HINT_KEY) === '1') {
+      setIsUnlocked(true);
+      setAuthChecking(false);
+    }
   }, []);
 
   // --- BACKEND 1-HOUR SESSION CHECK ---
@@ -120,9 +157,16 @@ export default function AcademicPlanner() {
       try {
         const res = await fetch('/api/auth', { cache: 'no-store' });
         const data = await res.json();
-        setIsUnlocked(Boolean(data.authenticated));
+        const authenticated = Boolean(data.authenticated);
+        setIsUnlocked(authenticated);
+        if (authenticated) {
+          sessionStorage.setItem(SESSION_HINT_KEY, '1');
+        } else {
+          sessionStorage.removeItem(SESSION_HINT_KEY);
+        }
       } catch {
         setIsUnlocked(false);
+        sessionStorage.removeItem(SESSION_HINT_KEY);
       } finally {
         setAuthChecking(false);
       }
@@ -183,7 +227,9 @@ export default function AcademicPlanner() {
 
   // --- FETCH ALL DATA ---
   const fetchAllData = async () => {
-    setLoading(true);
+    if (!localStorage.getItem(DATA_CACHE_KEY)) {
+      setLoading(true);
+    }
     try {
       const [coursesRes, routinesRes, assessmentsRes, notesRes, attendancesRes] =
         await Promise.all([
@@ -216,6 +262,22 @@ export default function AcademicPlanner() {
       if (assessmentsRes.data) setAssessments(assessmentsRes.data);
       if (notesRes.data) setNotes(notesRes.data);
       if (attendancesRes.data) setAttendances(attendancesRes.data);
+
+      // Update local cache for instant next reload
+      try {
+        localStorage.setItem(
+          DATA_CACHE_KEY,
+          JSON.stringify({
+            courses: coursesRes.data ?? [],
+            routines: routinesRes.data ?? [],
+            assessments: assessmentsRes.data ?? [],
+            notes: notesRes.data ?? [],
+            attendances: attendancesRes.data ?? [],
+          })
+        );
+      } catch {
+        // Ignore storage quota errors
+      }
     } catch (error) {
       console.error('Error fetching planner data:', error);
     } finally {
@@ -282,6 +344,7 @@ export default function AcademicPlanner() {
       });
 
       if (res.ok) {
+        sessionStorage.setItem(SESSION_HINT_KEY, '1');
         setIsUnlocked(true);
         setPinError(false);
         setPinInput('');
@@ -298,6 +361,8 @@ export default function AcademicPlanner() {
     try {
       await fetch('/api/auth', { method: 'DELETE' });
     } finally {
+      sessionStorage.removeItem(SESSION_HINT_KEY);
+      localStorage.removeItem(DATA_CACHE_KEY);
       setIsUnlocked(false);
       setPinInput('');
       setPinError(false);
