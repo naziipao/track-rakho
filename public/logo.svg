@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="trGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f46e5" />
+      <stop offset="100%" stop-color="#7c3aed" />
+    </linearGradient>
+  </defs>
+
+  
+  <rect width="64" height="64" rx="16" fill="url(#trGrad)" />
+
+  
+  <g stroke="#ffffff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <animateTransform attributeName="transform" type="translate" values="0 0; 0 -2.5; 0 0" dur="2.8s" repeatCount="indefinite" />
+    
+    <polygon points="32,16 52,25 32,34 12,25" fill="#ffffff" fill-opacity="0.18" />
+    
+    <path d="M20,29.5 V39 C20,42.5 25.4,45.5 32,45.5 C38.6,45.5 44,42.5 44,39 V29.5" />
+    
+    <path d="M52,25 V37" />
+  </g>
+
+  
+  <circle cx="52" cy="40" r="3.5" fill="#34d399">
+    <animate attributeName="r" values="2.8;4.5;2.8" dur="1.8s" repeatCount="indefinite" />
+    <animate attributeName="opacity" values="1;0.65;1" dur="1.8s" repeatCount="indefinite" />
+  </circle>
+</svg>

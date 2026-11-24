@@ -7,7 +7,6 @@ import {
   Moon,
   Sun,
   LayoutDashboard,
-  GraduationCap,
   StickyNote,
   ClipboardList,
   BookMarked,
@@ -53,9 +52,11 @@ export function Sidebar({
   return (
     <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 bg-white dark:bg-slate-900 border-r border-slate-200/80 dark:border-slate-800/80 z-30">
       <div className="p-6 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-500/30">
-          <GraduationCap className="w-6 h-6" />
-        </div>
+        <img
+          src="/logo.svg"
+          alt="Track Rakho Logo"
+          className="w-10 h-10 rounded-xl shadow-md shadow-indigo-500/30 shrink-0"
+        />
         <div>
           <h1 className="font-bold text-lg leading-tight tracking-tight">Track Rakho</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400">My Personal Planner</p>
@@ -149,9 +150,11 @@ export function MobileHeader({
   return (
     <header className="md:hidden sticky top-0 z-30 bg-white/85 dark:bg-slate-900/85 backdrop-blur-lg border-b border-slate-200/80 dark:border-slate-800/80 px-4 py-3 flex items-center justify-between gap-2">
       <div className="flex items-center gap-2">
-        <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shrink-0">
-          <GraduationCap className="w-5 h-5" />
-        </div>
+        <img
+          src="/logo.svg"
+          alt="Track Rakho Logo"
+          className="w-8 h-8 rounded-lg shrink-0"
+        />
         <span className="font-bold text-base tracking-tight">Track Rakho</span>
       </div>
 
