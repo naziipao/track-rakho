@@ -192,7 +192,7 @@ function NavMenuList({
                   onItemSelect?.();
                 }
               }}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium select-none cursor-pointer transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.96] ${
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium select-none cursor-pointer [-webkit-tap-highlight-color:transparent] focus:outline-none transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.96] ${
                 isBumped ? 'translate-x-1.5 scale-[1.02]' : 'translate-x-0 scale-100'
               } ${
                 isActive
@@ -242,7 +242,7 @@ function NavMenuList({
                         onSelectCategorizedAssessment(item.categorized!, cat);
                         onItemSelect?.();
                       }}
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium select-none cursor-pointer transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.96] ${
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium select-none cursor-pointer [-webkit-tap-highlight-color:transparent] focus:outline-none transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.96] ${
                         isSubBumped
                           ? 'translate-x-1 scale-[1.02]'
                           : 'translate-x-0 scale-100'
@@ -329,7 +329,7 @@ export function Sidebar({
         <button
           type="button"
           onClick={handleBrandPress}
-          className={`group relative flex items-center gap-3 text-left select-none cursor-pointer transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-90 active:translate-y-0.5 ${
+          className={`group relative flex items-center gap-3 text-left select-none cursor-pointer [-webkit-tap-highlight-color:transparent] focus:outline-none transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-90 active:translate-y-0.5 ${
             brandBouncing ? '-translate-y-1.5 scale-105' : 'translate-y-0 scale-100'
           }`}
         >
@@ -390,7 +390,7 @@ export function Sidebar({
             triggerActionBump('theme');
             onToggleDarkMode();
           }}
-          className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-sm font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 select-none cursor-pointer transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-95 ${
+          className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-sm font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 select-none cursor-pointer [-webkit-tap-highlight-color:transparent] focus:outline-none transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-95 ${
             bumpedAction === 'theme'
               ? '-translate-y-0.5 scale-[1.03]'
               : 'translate-y-0 scale-100'
@@ -418,7 +418,7 @@ export function Sidebar({
             onLogout();
           }}
           aria-label="Lock app"
-          className={`p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 select-none cursor-pointer transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-90 ${
+          className={`p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 select-none cursor-pointer [-webkit-tap-highlight-color:transparent] focus:outline-none transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-90 ${
             bumpedAction === 'logout'
               ? '-translate-y-0.5 scale-105'
               : 'translate-y-0 scale-100'
@@ -490,7 +490,7 @@ export function MobileHeader({
               type="button"
               onClick={() => setDrawerOpen(true)}
               aria-label="Open menu"
-              className="p-2 -ml-1 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 select-none cursor-pointer transition-transform duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-90"
+              className="p-2 -ml-1 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 select-none cursor-pointer [-webkit-tap-highlight-color:transparent] focus:outline-none transition-transform duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-90"
             >
               <Menu className="w-5 h-5" />
             </button>
@@ -498,7 +498,7 @@ export function MobileHeader({
             <button
               type="button"
               onClick={handleBrandPress}
-              className={`group relative flex items-center gap-2 shrink-0 select-none cursor-pointer transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-90 active:translate-y-0.5 ${
+              className={`group relative flex items-center gap-2 shrink-0 select-none cursor-pointer [-webkit-tap-highlight-color:transparent] focus:outline-none transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-90 active:translate-y-0.5 ${
                 brandBouncing ? '-translate-y-1 scale-105' : 'translate-y-0 scale-100'
               }`}
             >
@@ -542,7 +542,7 @@ export function MobileHeader({
                 onToggleDarkMode();
               }}
               aria-label="Toggle dark mode"
-              className={`p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 shrink-0 select-none cursor-pointer transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-90 ${
+              className={`p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 shrink-0 select-none cursor-pointer [-webkit-tap-highlight-color:transparent] focus:outline-none transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-90 ${
                 bumpedAction === 'theme'
                   ? '-translate-y-0.5 scale-105'
                   : 'translate-y-0 scale-100'
@@ -570,7 +570,7 @@ export function MobileHeader({
                 onLogout();
               }}
               aria-label="Lock app"
-              className={`p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-rose-600 dark:text-rose-400 shrink-0 select-none cursor-pointer transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-90 ${
+              className={`p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-rose-600 dark:text-rose-400 shrink-0 select-none cursor-pointer [-webkit-tap-highlight-color:transparent] focus:outline-none transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-90 ${
                 bumpedAction === 'logout'
                   ? '-translate-y-0.5 scale-105'
                   : 'translate-y-0 scale-100'
@@ -605,7 +605,7 @@ export function MobileHeader({
                   handleBrandPress();
                   setDrawerOpen(false);
                 }}
-                className={`group relative flex items-center gap-2.5 select-none cursor-pointer transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-90 active:translate-y-0.5 ${
+                className={`group relative flex items-center gap-2.5 select-none cursor-pointer [-webkit-tap-highlight-color:transparent] focus:outline-none transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-90 active:translate-y-0.5 ${
                   brandBouncing ? '-translate-y-1 scale-105' : 'translate-y-0 scale-100'
                 }`}
               >
@@ -630,7 +630,7 @@ export function MobileHeader({
                 type="button"
                 onClick={() => setDrawerOpen(false)}
                 aria-label="Close menu"
-                className="relative p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 select-none cursor-pointer transition-transform duration-200 active:scale-90"
+                className="relative p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 select-none cursor-pointer [-webkit-tap-highlight-color:transparent] focus:outline-none transition-transform duration-200 active:scale-90"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -679,6 +679,7 @@ export function MobileBottomNav({
   }, [bumpedKey]);
 
   useEffect(() => {
+    setOpenSubMenu(null);
     activeBtnRef.current?.scrollIntoView({
       behavior: 'smooth',
       inline: 'center',
@@ -714,7 +715,7 @@ export function MobileBottomNav({
                     onSelectCategorizedAssessment(openSubMenu, cat);
                     setOpenSubMenu(null);
                   }}
-                  className={`flex-1 max-w-[130px] flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-semibold select-none cursor-pointer transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-95 ${
+                  className={`flex-1 max-w-[130px] flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-semibold select-none cursor-pointer [-webkit-tap-highlight-color:transparent] focus:outline-none transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-95 ${
                     isSubBumped
                       ? '-translate-y-0.5 scale-[1.03]'
                       : 'translate-y-0 scale-100'
@@ -744,7 +745,7 @@ export function MobileBottomNav({
             type="button"
             onClick={() => setOpenSubMenu(null)}
             aria-label="Close sub-menu"
-            className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+            className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 [-webkit-tap-highlight-color:transparent] focus:outline-none"
           >
             <X className="w-4 h-4" />
           </button>
@@ -759,7 +760,7 @@ export function MobileBottomNav({
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
-          const isSubMenuOpen = item.categorized && openSubMenu === item.categorized;
+          const isSubMenuOpen = Boolean(item.categorized && openSubMenu === item.categorized);
           const badge = item.countKey ? pendingCounts[item.countKey] : 0;
           const isBumped = bumpedKey === item.id;
 
@@ -779,12 +780,14 @@ export function MobileBottomNav({
                   setActiveTab(item.id);
                 }
               }}
-              className={`relative shrink-0 min-w-[68px] flex flex-col items-center justify-center gap-1 py-1.5 px-2 rounded-xl select-none cursor-pointer transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-95 ${
+              className={`relative shrink-0 min-w-[68px] flex flex-col items-center justify-center gap-1 py-1.5 px-2 rounded-xl select-none cursor-pointer [-webkit-tap-highlight-color:transparent] focus:outline-none transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-95 ${
                 isBumped ? '-translate-y-1 scale-[1.04]' : 'translate-y-0 scale-100'
               } ${
-                isActive || isSubMenuOpen
+                isActive
                   ? 'bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400'
-                  : 'text-slate-500 dark:text-slate-400'
+                  : isSubMenuOpen
+                    ? 'bg-slate-100 dark:bg-slate-800/80 text-slate-800 dark:text-slate-200 ring-1 ring-slate-200 dark:ring-slate-700'
+                    : 'text-slate-500 dark:text-slate-400'
               }`}
             >
               <div className="relative">
