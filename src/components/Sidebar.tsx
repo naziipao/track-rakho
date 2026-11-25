@@ -145,6 +145,20 @@ function NavMenuList({
     Midterm: activeTab === 'Midterm',
     Final: activeTab === 'Final',
   });
+  const [bumpedKey, setBumpedKey] = useState<string | null>(null);
+
+  const triggerBump = (key: string) => {
+    setBumpedKey(null);
+    requestAnimationFrame(() => {
+      setBumpedKey(key);
+    });
+  };
+
+  useEffect(() => {
+    if (!bumpedKey) return;
+    const timer = setTimeout(() => setBumpedKey(null), 220);
+    return () => clearTimeout(timer);
+  }, [bumpedKey]);
 
   useEffect(() => {
     if (activeTab === 'Assignment' || activeTab === 'Midterm' || activeTab === 'Final') {
@@ -160,12 +174,14 @@ function NavMenuList({
         const badge = item.countKey ? pendingCounts[item.countKey] : 0;
         const isDropdown = Boolean(item.categorized);
         const isOpen = item.categorized ? expanded[item.categorized] : false;
+        const isBumped = bumpedKey === item.id;
 
         return (
           <div key={item.id}>
             <button
               type="button"
               onClick={() => {
+                triggerBump(item.id);
                 if (item.categorized) {
                   setExpanded((prev) => ({
                     ...prev,
@@ -176,14 +192,20 @@ function NavMenuList({
                   onItemSelect?.();
                 }
               }}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium select-none cursor-pointer transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.96] ${
+                isBumped ? 'translate-x-1.5 scale-[1.02]' : 'translate-x-0 scale-100'
+              } ${
                 isActive
                   ? 'bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300'
                   : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
               }`}
             >
               <span className="flex items-center gap-3">
-                <Icon className="w-4 h-4 shrink-0" />
+                <Icon
+                  className={`w-4 h-4 shrink-0 transition-transform duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+                    isBumped ? 'scale-110' : 'scale-100'
+                  }`}
+                />
                 <span>{item.label}</span>
               </span>
 
@@ -206,18 +228,25 @@ function NavMenuList({
             {item.categorized && isOpen && (
               <div className="ml-5 mt-1 mb-1.5 pl-3 border-l-2 border-slate-200 dark:border-slate-700 space-y-1">
                 {(['Theory', 'Lab'] as AssessmentCategory[]).map((cat) => {
+                  const subKey = `${item.categorized}-${cat}`;
                   const subActive = isActive && categoryFilters[item.categorized!] === cat;
                   const count = subCounts[item.categorized!][cat];
+                  const isSubBumped = bumpedKey === subKey;
 
                   return (
                     <button
                       key={cat}
                       type="button"
                       onClick={() => {
+                        triggerBump(subKey);
                         onSelectCategorizedAssessment(item.categorized!, cat);
                         onItemSelect?.();
                       }}
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium select-none cursor-pointer transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-[0.96] ${
+                        isSubBumped
+                          ? 'translate-x-1 scale-[1.02]'
+                          : 'translate-x-0 scale-100'
+                      } ${
                         subActive
                           ? 'bg-teal-600 text-white shadow-sm'
                           : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
@@ -260,22 +289,73 @@ export function Sidebar({
   pendingCounts,
   subCounts,
 }: SidebarProps) {
+  const [brandBouncing, setBrandBouncing] = useState(false);
+  const [bumpedAction, setBumpedAction] = useState<'theme' | 'logout' | null>(null);
+
+  const handleBrandPress = () => {
+    setActiveTab('today');
+    setBrandBouncing(false);
+    requestAnimationFrame(() => {
+      setBrandBouncing(true);
+    });
+  };
+
+  const triggerActionBump = (action: 'theme' | 'logout') => {
+    setBumpedAction(null);
+    requestAnimationFrame(() => {
+      setBumpedAction(action);
+    });
+  };
+
+  useEffect(() => {
+    if (!brandBouncing) return;
+    const timer = setTimeout(() => setBrandBouncing(false), 260);
+    return () => clearTimeout(timer);
+  }, [brandBouncing]);
+
+  useEffect(() => {
+    if (!bumpedAction) return;
+    const timer = setTimeout(() => setBumpedAction(null), 220);
+    return () => clearTimeout(timer);
+  }, [bumpedAction]);
+
   return (
     <aside className="hidden md:flex md:flex-col md:fixed md:inset-y-0 md:left-0 md:w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 z-30">
-      <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center gap-3 shrink-0">
+      <div className="relative p-5 border-b border-slate-200 dark:border-slate-800 flex items-center gap-3 shrink-0 overflow-hidden">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -top-6 left-4 w-44 h-16 rounded-full bg-gradient-to-r from-violet-500/20 via-teal-400/20 to-emerald-400/15 blur-2xl"
+        />
         <button
           type="button"
-          onClick={() => setActiveTab('today')}
-          className="flex items-center gap-2.5 text-left"
+          onClick={handleBrandPress}
+          className={`group relative flex items-center gap-3 text-left select-none cursor-pointer transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-90 active:translate-y-0.5 ${
+            brandBouncing ? '-translate-y-1.5 scale-105' : 'translate-y-0 scale-100'
+          }`}
         >
-          <img
-            src="/logo.svg"
-            alt="Track Rakho"
-            className="w-9 h-9 rounded-xl object-cover shadow-sm shrink-0"
-          />
-          <span className="font-bold text-lg tracking-tight text-slate-900 dark:text-white">
-            Track Rakho
-          </span>
+          <div className="relative shrink-0">
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute -inset-1 rounded-2xl bg-gradient-to-tr from-violet-600/45 via-indigo-500/35 to-teal-400/45 blur-md opacity-80 group-hover:opacity-100 transition-opacity duration-300"
+            />
+            <img
+              src="/logo.svg?v=2"
+              alt="Track Rakho"
+              className={`relative w-9 h-9 rounded-xl object-cover ring-1 ring-white/40 dark:ring-indigo-300/30 shadow-[0_0_18px_-2px_rgba(124,58,237,0.5)] transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:scale-105 group-active:scale-90 group-active:-rotate-6 ${
+                brandBouncing ? 'rotate-6 scale-110' : ''
+              }`}
+            />
+          </div>
+
+          <div className="relative">
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute -inset-x-1.5 -inset-y-0.5 rounded-lg bg-gradient-to-r from-teal-400/25 via-emerald-400/20 to-violet-500/25 blur-md opacity-75 group-hover:opacity-100 transition-opacity duration-300"
+            />
+            <span className="relative font-extrabold text-lg tracking-tight bg-gradient-to-r from-slate-900 via-teal-800 to-indigo-900 dark:from-white dark:via-teal-100 dark:to-indigo-200 bg-clip-text text-transparent drop-shadow-[0_0_10px_rgba(20,184,166,0.28)] dark:drop-shadow-[0_0_14px_rgba(45,212,191,0.55)]">
+              Track Rakho
+            </span>
+          </div>
         </button>
       </div>
 
@@ -306,19 +386,49 @@ export function Sidebar({
       <div className="p-3 border-t border-slate-200 dark:border-slate-800 flex items-center gap-2 shrink-0">
         <button
           type="button"
-          onClick={onToggleDarkMode}
-          className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-sm font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700"
+          onClick={() => {
+            triggerActionBump('theme');
+            onToggleDarkMode();
+          }}
+          className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-sm font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 select-none cursor-pointer transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-95 ${
+            bumpedAction === 'theme'
+              ? '-translate-y-0.5 scale-[1.03]'
+              : 'translate-y-0 scale-100'
+          }`}
         >
-          {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          {darkMode ? (
+            <Sun
+              className={`w-4 h-4 transition-transform duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+                bumpedAction === 'theme' ? 'scale-110 rotate-45' : 'scale-100 rotate-0'
+              }`}
+            />
+          ) : (
+            <Moon
+              className={`w-4 h-4 transition-transform duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+                bumpedAction === 'theme' ? 'scale-110 -rotate-12' : 'scale-100 rotate-0'
+              }`}
+            />
+          )}
           <span>{darkMode ? 'Light' : 'Dark'}</span>
         </button>
         <button
           type="button"
-          onClick={onLogout}
+          onClick={() => {
+            triggerActionBump('logout');
+            onLogout();
+          }}
           aria-label="Lock app"
-          className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50"
+          className={`p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 select-none cursor-pointer transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-90 ${
+            bumpedAction === 'logout'
+              ? '-translate-y-0.5 scale-105'
+              : 'translate-y-0 scale-100'
+          }`}
         >
-          <LogOut className="w-4 h-4" />
+          <LogOut
+            className={`w-4 h-4 transition-transform duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+              bumpedAction === 'logout' ? 'scale-110 translate-x-0.5' : 'scale-100'
+            }`}
+          />
         </button>
       </div>
     </aside>
@@ -341,6 +451,35 @@ export function MobileHeader({
   subCounts,
 }: MobileHeaderProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [brandBouncing, setBrandBouncing] = useState(false);
+  const [bumpedAction, setBumpedAction] = useState<'theme' | 'logout' | null>(null);
+
+  const handleBrandPress = () => {
+    setActiveTab('today');
+    setBrandBouncing(false);
+    requestAnimationFrame(() => {
+      setBrandBouncing(true);
+    });
+  };
+
+  const triggerActionBump = (action: 'theme' | 'logout') => {
+    setBumpedAction(null);
+    requestAnimationFrame(() => {
+      setBumpedAction(action);
+    });
+  };
+
+  useEffect(() => {
+    if (!brandBouncing) return;
+    const timer = setTimeout(() => setBrandBouncing(false), 260);
+    return () => clearTimeout(timer);
+  }, [brandBouncing]);
+
+  useEffect(() => {
+    if (!bumpedAction) return;
+    const timer = setTimeout(() => setBumpedAction(null), 220);
+    return () => clearTimeout(timer);
+  }, [bumpedAction]);
 
   return (
     <>
@@ -351,22 +490,32 @@ export function MobileHeader({
               type="button"
               onClick={() => setDrawerOpen(true)}
               aria-label="Open menu"
-              className="p-2 -ml-1 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="p-2 -ml-1 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 select-none cursor-pointer transition-transform duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-90"
             >
               <Menu className="w-5 h-5" />
             </button>
 
             <button
               type="button"
-              onClick={() => setActiveTab('today')}
-              className="flex items-center gap-2 shrink-0"
+              onClick={handleBrandPress}
+              className={`group relative flex items-center gap-2 shrink-0 select-none cursor-pointer transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-90 active:translate-y-0.5 ${
+                brandBouncing ? '-translate-y-1 scale-105' : 'translate-y-0 scale-100'
+              }`}
             >
-              <img
-                src="/logo.svg?v=2"
-                alt="Track Rakho"
-                className="w-8 h-8 rounded-lg object-cover shadow-sm shrink-0"
-              />
-              <span className="font-bold text-sm tracking-tight text-slate-900 dark:text-white whitespace-nowrap">
+              <div className="relative shrink-0">
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute -inset-0.5 rounded-xl bg-gradient-to-tr from-violet-600/40 via-indigo-500/30 to-teal-400/40 blur-sm opacity-80"
+                />
+                <img
+                  src="/logo.svg?v=2"
+                  alt="Track Rakho"
+                  className={`relative w-8 h-8 rounded-lg object-cover ring-1 ring-white/40 dark:ring-indigo-300/30 shadow-[0_0_14px_-2px_rgba(124,58,237,0.45)] transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-active:scale-90 group-active:-rotate-6 ${
+                    brandBouncing ? 'rotate-6 scale-110' : ''
+                  }`}
+                />
+              </div>
+              <span className="font-extrabold text-sm tracking-tight whitespace-nowrap bg-gradient-to-r from-slate-900 via-teal-800 to-indigo-900 dark:from-white dark:via-teal-100 dark:to-indigo-200 bg-clip-text text-transparent drop-shadow-[0_0_8px_rgba(20,184,166,0.25)] dark:drop-shadow-[0_0_12px_rgba(45,212,191,0.5)]">
                 Track Rakho
               </span>
             </button>
@@ -388,20 +537,50 @@ export function MobileHeader({
 
             <button
               type="button"
-              onClick={onToggleDarkMode}
+              onClick={() => {
+                triggerActionBump('theme');
+                onToggleDarkMode();
+              }}
               aria-label="Toggle dark mode"
-              className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 shrink-0"
+              className={`p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 shrink-0 select-none cursor-pointer transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-90 ${
+                bumpedAction === 'theme'
+                  ? '-translate-y-0.5 scale-105'
+                  : 'translate-y-0 scale-100'
+              }`}
             >
-              {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              {darkMode ? (
+                <Sun
+                  className={`w-4 h-4 transition-transform duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+                    bumpedAction === 'theme' ? 'scale-110 rotate-45' : 'scale-100 rotate-0'
+                  }`}
+                />
+              ) : (
+                <Moon
+                  className={`w-4 h-4 transition-transform duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+                    bumpedAction === 'theme' ? 'scale-110 -rotate-12' : 'scale-100 rotate-0'
+                  }`}
+                />
+              )}
             </button>
 
             <button
               type="button"
-              onClick={onLogout}
+              onClick={() => {
+                triggerActionBump('logout');
+                onLogout();
+              }}
               aria-label="Lock app"
-              className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-rose-600 dark:text-rose-400 shrink-0"
+              className={`p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-rose-600 dark:text-rose-400 shrink-0 select-none cursor-pointer transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-90 ${
+                bumpedAction === 'logout'
+                  ? '-translate-y-0.5 scale-105'
+                  : 'translate-y-0 scale-100'
+              }`}
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut
+                className={`w-4 h-4 transition-transform duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+                  bumpedAction === 'logout' ? 'scale-110 translate-x-0.5' : 'scale-100'
+                }`}
+              />
             </button>
           </div>
         </div>
@@ -415,22 +594,43 @@ export function MobileHeader({
             onClick={() => setDrawerOpen(false)}
           />
           <aside className="relative w-72 max-w-[82vw] h-full bg-white dark:bg-slate-900 shadow-2xl flex flex-col z-10">
-            <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <img
-                  src="/logo.svg?v=2"
-                  alt="Track Rakho"
-                  className="w-8 h-8 rounded-lg object-cover shadow-sm shrink-0"
-                />
-                <span className="font-bold text-base text-slate-900 dark:text-white">
+            <div className="relative p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between overflow-hidden">
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute -top-5 left-3 w-40 h-14 rounded-full bg-gradient-to-r from-violet-500/20 via-teal-400/20 to-emerald-400/15 blur-xl"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  handleBrandPress();
+                  setDrawerOpen(false);
+                }}
+                className={`group relative flex items-center gap-2.5 select-none cursor-pointer transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-90 active:translate-y-0.5 ${
+                  brandBouncing ? '-translate-y-1 scale-105' : 'translate-y-0 scale-100'
+                }`}
+              >
+                <div className="relative shrink-0">
+                  <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute -inset-0.5 rounded-xl bg-gradient-to-tr from-violet-600/45 via-indigo-500/35 to-teal-400/45 blur-sm opacity-80"
+                  />
+                  <img
+                    src="/logo.svg?v=2"
+                    alt="Track Rakho"
+                    className={`relative w-8 h-8 rounded-lg object-cover ring-1 ring-white/40 dark:ring-indigo-300/30 shadow-[0_0_16px_-2px_rgba(124,58,237,0.45)] transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-active:scale-90 group-active:-rotate-6 ${
+                      brandBouncing ? 'rotate-6 scale-110' : ''
+                    }`}
+                  />
+                </div>
+                <span className="font-extrabold text-base tracking-tight bg-gradient-to-r from-slate-900 via-teal-800 to-indigo-900 dark:from-white dark:via-teal-100 dark:to-indigo-200 bg-clip-text text-transparent drop-shadow-[0_0_8px_rgba(20,184,166,0.25)] dark:drop-shadow-[0_0_12px_rgba(45,212,191,0.5)]">
                   Track Rakho
                 </span>
-              </div>
+              </button>
               <button
                 type="button"
                 onClick={() => setDrawerOpen(false)}
                 aria-label="Close menu"
-                className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                className="relative p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 select-none cursor-pointer transition-transform duration-200 active:scale-90"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -463,6 +663,20 @@ export function MobileBottomNav({
 }: MobileBottomNavProps) {
   const activeBtnRef = useRef<HTMLButtonElement | null>(null);
   const [openSubMenu, setOpenSubMenu] = useState<CategorizedAssessmentType | null>(null);
+  const [bumpedKey, setBumpedKey] = useState<string | null>(null);
+
+  const triggerBump = (key: string) => {
+    setBumpedKey(null);
+    requestAnimationFrame(() => {
+      setBumpedKey(key);
+    });
+  };
+
+  useEffect(() => {
+    if (!bumpedKey) return;
+    const timer = setTimeout(() => setBumpedKey(null), 220);
+    return () => clearTimeout(timer);
+  }, [bumpedKey]);
 
   useEffect(() => {
     activeBtnRef.current?.scrollIntoView({
@@ -485,19 +699,26 @@ export function MobileBottomNav({
           </span>
           <div className="flex-1 flex items-center justify-center gap-2">
             {(['Theory', 'Lab'] as AssessmentCategory[]).map((cat) => {
+              const subKey = `${openSubMenu}-${cat}`;
               const isSelected =
                 activeTab === openSubMenu && categoryFilters[openSubMenu] === cat;
               const count = subCounts?.[openSubMenu]?.[cat];
+              const isSubBumped = bumpedKey === subKey;
 
               return (
                 <button
                   key={cat}
                   type="button"
                   onClick={() => {
+                    triggerBump(subKey);
                     onSelectCategorizedAssessment(openSubMenu, cat);
                     setOpenSubMenu(null);
                   }}
-                  className={`flex-1 max-w-[130px] flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-semibold transition-colors ${
+                  className={`flex-1 max-w-[130px] flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-semibold select-none cursor-pointer transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-95 ${
+                    isSubBumped
+                      ? '-translate-y-0.5 scale-[1.03]'
+                      : 'translate-y-0 scale-100'
+                  } ${
                     isSelected
                       ? 'bg-teal-600 text-white shadow-xs'
                       : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
@@ -540,6 +761,7 @@ export function MobileBottomNav({
           const isActive = activeTab === item.id;
           const isSubMenuOpen = item.categorized && openSubMenu === item.categorized;
           const badge = item.countKey ? pendingCounts[item.countKey] : 0;
+          const isBumped = bumpedKey === item.id;
 
           return (
             <button
@@ -547,6 +769,7 @@ export function MobileBottomNav({
               ref={isActive ? activeBtnRef : null}
               type="button"
               onClick={() => {
+                triggerBump(item.id);
                 if (item.categorized) {
                   setOpenSubMenu((prev) =>
                     prev === item.categorized ? null : item.categorized!
@@ -556,14 +779,20 @@ export function MobileBottomNav({
                   setActiveTab(item.id);
                 }
               }}
-              className={`relative shrink-0 min-w-[68px] flex flex-col items-center justify-center gap-1 py-1.5 px-2 rounded-xl transition-colors ${
+              className={`relative shrink-0 min-w-[68px] flex flex-col items-center justify-center gap-1 py-1.5 px-2 rounded-xl select-none cursor-pointer transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-95 ${
+                isBumped ? '-translate-y-1 scale-[1.04]' : 'translate-y-0 scale-100'
+              } ${
                 isActive || isSubMenuOpen
                   ? 'bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400'
                   : 'text-slate-500 dark:text-slate-400'
               }`}
             >
               <div className="relative">
-                <Icon className="w-5 h-5" />
+                <Icon
+                  className={`w-5 h-5 transition-transform duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+                    isBumped ? 'scale-110' : 'scale-100'
+                  }`}
+                />
                 {badge > 0 && (
                   <span className="absolute -top-1.5 -right-2.5 min-w-[16px] h-4 px-1 flex items-center justify-center text-[10px] font-bold rounded-full bg-teal-600 text-white">
                     {badge}
