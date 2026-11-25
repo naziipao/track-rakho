@@ -5,6 +5,7 @@ import { Sparkles } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import {
   Assessment,
+  AssessmentCategory,
   AssessmentType,
   ASSESSMENT_TABS,
   Attendance,
@@ -17,7 +18,12 @@ import {
   TabId,
 } from '@/lib/types';
 import LockScreen from '@/components/LockScreen';
-import { Sidebar, MobileHeader, MobileBottomNav } from '@/components/Sidebar';
+import {
+  Sidebar,
+  MobileHeader,
+  MobileBottomNav,
+  CategorizedAssessmentType,
+} from '@/components/Sidebar';
 import TodayView from '@/components/TodayView';
 import RoutineView from '@/components/RoutineView';
 import AssessmentView from '@/components/AssessmentView';
@@ -48,6 +54,13 @@ export default function AcademicPlanner() {
 
   // --- NAVIGATION & DATA STATE ---
   const [activeTab, setActiveTab] = useState<TabId>('today');
+  const [categoryFilters, setCategoryFilters] = useState<
+    Record<CategorizedAssessmentType, AssessmentCategory>
+  >({
+    Assignment: 'Theory',
+    Midterm: 'Theory',
+    Final: 'Theory',
+  });
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
 
@@ -66,11 +79,13 @@ export default function AcademicPlanner() {
 
   // --- MODAL & FORM STATES ---
   const [activeModal, setActiveModal] = useState<ModalType>(null);
+  const [editingCourseId, setEditingCourseId] = useState<string | null>(null);
   const [editingAssessmentId, setEditingAssessmentId] = useState<string | null>(null);
 
   const [courseForm, setCourseForm] = useState({
     semester: 'Fall 2026',
     code: '',
+    section: '',
     name: '',
     faculty: '',
     color: COURSE_COLORS[0],
@@ -85,6 +100,7 @@ export default function AcademicPlanner() {
   const [assessmentForm, setAssessmentForm] = useState({
     course_id: '',
     type: 'Quiz' as AssessmentType,
+    category: 'Theory' as AssessmentCategory,
     title: '',
     topics: '',
     due_date: '',
@@ -117,7 +133,6 @@ export default function AcademicPlanner() {
       setActiveSemester(savedSemester);
     }
 
-    // Hydrate cached planner data immediately so reloads don't feel slow
     try {
       const cachedRaw = localStorage.getItem(DATA_CACHE_KEY);
       if (cachedRaw) {
@@ -145,7 +160,6 @@ export default function AcademicPlanner() {
       // Ignore malformed cache
     }
 
-    // If unlocked in this browser session, render immediately while /api/auth verifies in background
     if (sessionStorage.getItem(SESSION_HINT_KEY) === '1') {
       setIsUnlocked(true);
       setAuthChecking(false);
@@ -195,16 +209,70 @@ export default function AcademicPlanner() {
     localStorage.setItem('uniflow_active_semester', sem);
   };
 
+  const handleSelectCategorizedAssessment = (
+    type: CategorizedAssessmentType,
+    category: AssessmentCategory
+  ) => {
+    setActiveTab(type);
+    setCategoryFilters((prev) => ({ ...prev, [type]: category }));
+  };
+
+  const handleChangeCategoryFilter = (
+    type: CategorizedAssessmentType,
+    category: AssessmentCategory
+  ) => {
+    setCategoryFilters((prev) => ({ ...prev, [type]: category }));
+  };
+
   const closeModal = () => {
     setActiveModal(null);
+    setEditingCourseId(null);
     setEditingAssessmentId(null);
   };
 
-  const openAssessmentModal = (defaultType?: AssessmentType) => {
+  const openAddCourseModal = (defaultSemester?: string) => {
+    setEditingCourseId(null);
+    setCourseForm((prev) => ({
+      semester: defaultSemester || prev.semester || 'Fall 2026',
+      code: '',
+      section: '',
+      name: '',
+      faculty: '',
+      color: COURSE_COLORS[(courses.length + 1) % COURSE_COLORS.length],
+    }));
+    setActiveModal('course');
+  };
+
+  const openEditCourseModal = (course: Course) => {
+    setEditingCourseId(course.id);
+    setCourseForm({
+      semester: course.semester || 'Fall 2026',
+      code: course.code || '',
+      section: course.section || '',
+      name: course.name || '',
+      faculty: course.faculty || '',
+      color: course.color || COURSE_COLORS[0],
+    });
+    setActiveModal('course');
+  };
+
+  const openAssessmentModal = (
+    defaultType?: AssessmentType,
+    defaultCategory?: AssessmentCategory
+  ) => {
     setEditingAssessmentId(null);
+    const resolvedType = defaultType || assessmentForm.type;
+    const isCategorized =
+      resolvedType === 'Assignment' ||
+      resolvedType === 'Midterm' ||
+      resolvedType === 'Final';
+
     setAssessmentForm((prev) => ({
       ...prev,
-      type: defaultType || prev.type,
+      type: resolvedType,
+      category:
+        defaultCategory ||
+        (isCategorized ? categoryFilters[resolvedType] : prev.category || 'Theory'),
       title: '',
       topics: '',
       due_date: '',
@@ -218,6 +286,7 @@ export default function AcademicPlanner() {
     setAssessmentForm({
       course_id: item.course_id,
       type: item.type,
+      category: item.category === 'Lab' ? 'Lab' : 'Theory',
       title: item.title,
       topics: item.topics || '',
       due_date: toDateTimeLocal(item.due_date),
@@ -264,7 +333,6 @@ export default function AcademicPlanner() {
       if (notesRes.data) setNotes(notesRes.data);
       if (attendancesRes.data) setAttendances(attendancesRes.data);
 
-      // Update local cache for instant next reload
       try {
         localStorage.setItem(
           DATA_CACHE_KEY,
@@ -377,25 +445,34 @@ export default function AcademicPlanner() {
   // --- CRUD HANDLERS ---
   const handleAddCourse = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!courseForm.code.trim() || !courseForm.name.trim() || !courseForm.semester.trim()) return;
+    if (
+      !courseForm.code.trim() ||
+      !courseForm.section.trim() ||
+      !courseForm.name.trim() ||
+      !courseForm.semester.trim()
+    )
+      return;
     setSaving(true);
     const cleanSemester = courseForm.semester.trim();
 
-    const { error } = await supabase.from('courses').insert([
-      {
-        semester: cleanSemester,
-        code: courseForm.code.toUpperCase().trim(),
-        name: courseForm.name.trim(),
-        faculty: courseForm.faculty.toUpperCase().trim(),
-        color: courseForm.color,
-      },
-    ]);
+    const payload = {
+      semester: cleanSemester,
+      code: courseForm.code.toUpperCase().trim(),
+      section: courseForm.section.toUpperCase().trim(),
+      name: courseForm.name.trim(),
+      faculty: courseForm.faculty.toUpperCase().trim(),
+      color: courseForm.color,
+    };
+
+    const { error } = editingCourseId
+      ? await supabase.from('courses').update(payload).eq('id', editingCourseId)
+      : await supabase.from('courses').insert([payload]);
 
     setSaving(false);
 
     if (error) {
       alert(
-        `Could not save course: ${error.message}\n\nMake sure you ran the SQL query in Supabase to create the 'courses' table and 'semester' column.`
+        `Could not save course: ${error.message}\n\nMake sure you ran the SQL query in Supabase to add the 'section' column to the 'courses' table.`
       );
       return;
     }
@@ -403,6 +480,7 @@ export default function AcademicPlanner() {
     setCourseForm({
       semester: cleanSemester,
       code: '',
+      section: '',
       name: '',
       faculty: '',
       color: COURSE_COLORS[(courses.length + 1) % COURSE_COLORS.length],
@@ -446,8 +524,10 @@ export default function AcademicPlanner() {
   const handleAddAssessment = async (e: React.FormEvent) => {
     e.preventDefault();
     const isExam = assessmentForm.type === 'Midterm' || assessmentForm.type === 'Final';
+    const hasCategory =
+      assessmentForm.type === 'Assignment' || isExam;
     const finalTitle = isExam
-      ? `${assessmentForm.type} Exam`
+      ? `${assessmentForm.category} ${assessmentForm.type} Exam`
       : assessmentForm.title.trim();
 
     if (!assessmentForm.course_id || !finalTitle || !assessmentForm.due_date) return;
@@ -456,6 +536,7 @@ export default function AcademicPlanner() {
     const payload = {
       course_id: assessmentForm.course_id,
       type: assessmentForm.type,
+      category: hasCategory ? assessmentForm.category : null,
       title: finalTitle,
       topics: assessmentForm.topics.trim(),
       due_date: new Date(assessmentForm.due_date).toISOString(),
@@ -593,12 +674,37 @@ export default function AcademicPlanner() {
     [visibleAssessments]
   );
 
+  const subCounts = useMemo(() => {
+    const buildSubCount = (type: CategorizedAssessmentType) => {
+      const items = visibleAssessments.filter((a) => a.type === type);
+      return {
+        Theory: items.filter((a) => (a.category || 'Theory') === 'Theory').length,
+        Lab: items.filter((a) => a.category === 'Lab').length,
+      };
+    };
+
+    return {
+      Assignment: buildSubCount('Assignment'),
+      Midterm: buildSubCount('Midterm'),
+      Final: buildSubCount('Final'),
+    };
+  }, [visibleAssessments]);
+
   const isAssessmentTab = ASSESSMENT_TABS.includes(activeTab as AssessmentType);
 
   const currentTabAssessments = useMemo(() => {
     if (!isAssessmentTab) return [];
-    return visibleAssessments.filter((a) => a.type === activeTab);
-  }, [visibleAssessments, activeTab, isAssessmentTab]);
+    const byType = visibleAssessments.filter((a) => a.type === activeTab);
+    if (
+      activeTab === 'Assignment' ||
+      activeTab === 'Midterm' ||
+      activeTab === 'Final'
+    ) {
+      const activeCategory = categoryFilters[activeTab];
+      return byType.filter((a) => (a.category || 'Theory') === activeCategory);
+    }
+    return byType;
+  }, [visibleAssessments, activeTab, isAssessmentTab, categoryFilters]);
 
   // --- AUTH LOADING & LOCK SCREEN ---
   if (authChecking) {
@@ -627,12 +733,19 @@ export default function AcademicPlanner() {
     );
   }
 
+  const activeCategorizedType =
+    activeTab === 'Assignment' || activeTab === 'Midterm' || activeTab === 'Final'
+      ? activeTab
+      : null;
+
   // --- MAIN APP SHELL ---
   return (
     <div className="min-h-screen pb-24 md:pb-8 flex flex-col md:flex-row">
       <Sidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
+        categoryFilters={categoryFilters}
+        onSelectCategorizedAssessment={handleSelectCategorizedAssessment}
         uniqueSemesters={uniqueSemesters}
         activeSemester={activeSemester}
         onSelectActiveSemester={handleSelectActiveSemester}
@@ -640,6 +753,7 @@ export default function AcademicPlanner() {
         onToggleDarkMode={toggleDarkMode}
         onLogout={handleLogout}
         pendingCounts={pendingCounts}
+        subCounts={subCounts}
       />
 
       <MobileHeader
@@ -654,7 +768,6 @@ export default function AcademicPlanner() {
 
       <main className="flex-1 md:pl-64">
         <div className="max-w-5xl mx-auto p-4 sm:p-6 md:p-8">
-          {/* SETUP PROMPT IF NO COURSES EXIST YET */}
           {!loading && courses.length === 0 && (
             <div className="mb-6 p-6 rounded-2xl bg-gradient-to-r from-teal-600 to-emerald-600 text-white shadow-xl shadow-teal-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
@@ -662,11 +775,11 @@ export default function AcademicPlanner() {
                   <Sparkles className="w-5 h-5" /> Welcome to Track Rakho!
                 </div>
                 <p className="text-teal-50 text-sm mt-1">
-                  Start by adding your semester name and courses (code, title, and faculty initials).
+                  Start by adding your semester name and courses (code, section, title, and faculty initials).
                 </p>
               </div>
               <button
-                onClick={() => setActiveModal('course')}
+                onClick={() => openAddCourseModal()}
                 className="btn-tactile shrink-0 px-4 py-2.5 rounded-xl bg-white text-teal-700 font-semibold text-sm shadow-md hover:bg-teal-50"
               >
                 + Add First Course
@@ -708,6 +821,14 @@ export default function AcademicPlanner() {
               assessments={currentTabAssessments}
               activeSemester={activeSemester}
               activeCoursesCount={activeCourses.length}
+              categoryFilter={
+                activeCategorizedType ? categoryFilters[activeCategorizedType] : 'Theory'
+              }
+              onChangeCategoryFilter={
+                activeCategorizedType
+                  ? (cat) => handleChangeCategoryFilter(activeCategorizedType, cat)
+                  : undefined
+              }
               onOpenAddAssessment={openAssessmentModal}
               onEditAssessment={openEditAssessmentModal}
               onDeleteAssessment={handleDeleteAssessment}
@@ -742,12 +863,8 @@ export default function AcademicPlanner() {
               courseTabFilter={courseTabFilter}
               setCourseTabFilter={setCourseTabFilter}
               coursesBySemester={coursesBySemester}
-              onOpenAddCourse={(defaultSemester) => {
-                if (defaultSemester) {
-                  setCourseForm((prev) => ({ ...prev, semester: defaultSemester }));
-                }
-                setActiveModal('course');
-              }}
+              onOpenAddCourse={openAddCourseModal}
+              onEditCourse={openEditCourseModal}
               onDeleteCourse={handleDeleteCourse}
             />
           )}
@@ -764,6 +881,7 @@ export default function AcademicPlanner() {
         activeModal={activeModal}
         onClose={closeModal}
         saving={saving}
+        editingCourseId={editingCourseId}
         editingAssessmentId={editingAssessmentId}
         uniqueSemesters={uniqueSemesters}
         courses={courses}

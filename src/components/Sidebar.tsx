@@ -1,39 +1,307 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  BookOpen,
   Calendar,
   CheckSquare,
   ClipboardList,
   FileText,
   GraduationCap,
-  Home,
-  LogOut,
-  Moon,
-  NotebookPen,
+  Users,
+  BookOpen,
+  Layers,
   Sun,
-  UserCheck,
+  Moon,
+  LogOut,
+  Home,
+  ChevronDown,
+  FlaskConical,
+  BookMarked,
 } from 'lucide-react';
-import { TabId } from '@/lib/types';
+import { AssignmentCategory, AssessmentType, ExamCategory, TabId } from '@/lib/types';
 
-interface PendingCounts {
-  Quiz: number;
-  Assignment: number;
-  Midterm: number;
-  Final: number;
-}
+export type CategorizedAssessmentType = 'Assignment' | 'Midterm' | 'Final';
 
 interface SidebarProps {
   activeTab: TabId;
   setActiveTab: (tab: TabId) => void;
+  categoryFilters: Record<CategorizedAssessmentType, AssignmentCategory | ExamCategory>;
+  onSelectCategorizedAssessment: (
+    type: CategorizedAssessmentType,
+    category: AssignmentCategory | ExamCategory
+  ) => void;
   uniqueSemesters: string[];
   activeSemester: string;
   onSelectActiveSemester: (sem: string) => void;
   darkMode: boolean;
   onToggleDarkMode: () => void;
   onLogout: () => void;
-  pendingCounts: PendingCounts;
+  pendingCounts: Record<AssessmentType, number>;
+  subCounts: Record<
+    CategorizedAssessmentType,
+    Record<AssignmentCategory | ExamCategory, number>
+  >;
+}
+
+export function Sidebar({
+  activeTab,
+  setActiveTab,
+  categoryFilters,
+  onSelectCategorizedAssessment,
+  uniqueSemesters,
+  activeSemester,
+  onSelectActiveSemester,
+  darkMode,
+  onToggleDarkMode,
+  onLogout,
+  pendingCounts,
+  subCounts,
+}: SidebarProps) {
+  const [expandedSections, setExpandedSections] = useState<
+    Record<CategorizedAssessmentType, boolean>
+  >({
+    Assignment: activeTab === 'Assignment',
+    Midterm: activeTab === 'Midterm',
+    Final: activeTab === 'Final',
+  });
+
+  useEffect(() => {
+    if (activeTab === 'Assignment' || activeTab === 'Midterm' || activeTab === 'Final') {
+      setExpandedSections((prev) => ({ ...prev, [activeTab]: true }));
+    }
+  }, [activeTab]);
+
+  const toggleSection = (type: CategorizedAssessmentType) => {
+    setExpandedSections((prev) => ({ ...prev, [type]: !prev[type] }));
+  };
+
+  const navItemClass = (isActive: boolean) =>
+    `btn-tactile w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
+      isActive
+        ? 'bg-gradient-to-r from-teal-600 to-emerald-600 text-white shadow-md shadow-teal-500/25'
+        : 'text-stone-600 dark:text-zinc-400 hover:bg-stone-100 dark:hover:bg-white/[0.06] hover:text-stone-900 dark:hover:text-zinc-100'
+    }`;
+
+  const renderExpandableCategorySection = (
+    type: CategorizedAssessmentType,
+    label: string,
+    icon: React.ReactNode
+  ) => {
+    const isExpanded = expandedSections[type];
+    const currentCategory = categoryFilters[type];
+    const counts = subCounts[type];
+
+    return (
+      <div className="space-y-1">
+        <button
+          type="button"
+          aria-expanded={isExpanded}
+          onClick={() => toggleSection(type)}
+          className={navItemClass(false)}
+        >
+          <span className="flex items-center gap-3">
+            {icon} {label}
+          </span>
+          <span className="flex items-center gap-1.5">
+            {pendingCounts[type] > 0 && (
+              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-teal-500/15 text-teal-600 dark:text-teal-400">
+                {pendingCounts[type]}
+              </span>
+            )}
+            <ChevronDown
+              className={`w-4 h-4 transition-transform duration-200 ${
+                isExpanded ? 'rotate-180' : ''
+              }`}
+            />
+          </span>
+        </button>
+
+        {isExpanded && (
+          <div className="pl-5 pr-1 space-y-1 pt-0.5">
+            {(['Theory', 'Lab'] as const).map((cat) => {
+              const isSelected = activeTab === type && currentCategory === cat;
+              const CatIcon = cat === 'Theory' ? BookMarked : FlaskConical;
+
+              return (
+                <button
+                  type="button"
+                  key={cat}
+                  onClick={() => onSelectCategorizedAssessment(type, cat)}
+                  className={`btn-tactile w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                    isSelected
+                      ? 'bg-gradient-to-r from-teal-600 to-emerald-600 text-white shadow-md shadow-teal-500/25'
+                      : 'text-stone-600 dark:text-zinc-400 hover:bg-stone-100 dark:hover:bg-white/[0.06] hover:text-stone-900 dark:hover:text-zinc-200'
+                  }`}
+                >
+                  <span className="flex items-center gap-2.5">
+                    <CatIcon
+                      className={`w-3.5 h-3.5 ${
+                        isSelected
+                          ? 'text-white'
+                          : cat === 'Theory'
+                            ? 'text-teal-500'
+                            : 'text-emerald-500'
+                      }`}
+                    />{' '}
+                    {cat}
+                  </span>
+                  {counts[cat] > 0 && (
+                    <span
+                      className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${
+                        isSelected
+                          ? 'bg-white/20 text-white'
+                          : 'bg-stone-200/80 dark:bg-white/[0.08] text-stone-700 dark:text-zinc-200'
+                      }`}
+                    >
+                      {counts[cat]}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 border-r border-stone-200/80 dark:border-white/[0.08] bg-white/90 dark:bg-[#0d1017]/95 backdrop-blur-xl z-30">
+      <div className="p-5 flex items-center justify-between border-b border-stone-200/70 dark:border-white/[0.07]">
+        <div className="flex items-center gap-2.5">
+          <img
+            src="/logo.svg"
+            alt="Track Rakho"
+            className="w-8 h-8 rounded-xl object-cover shadow-sm"
+          />
+          <span className="font-bold text-base tracking-tight">Track Rakho</span>
+        </div>
+        <button
+          onClick={onToggleDarkMode}
+          aria-label="Toggle theme"
+          className="btn-tactile p-2 rounded-xl bg-stone-100 dark:bg-white/[0.06] text-stone-600 dark:text-zinc-300 hover:text-teal-600 dark:hover:text-teal-400"
+        >
+          {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+        </button>
+      </div>
+
+      {uniqueSemesters.length > 0 && (
+        <div className="px-4 pt-4 pb-1">
+          <label className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-stone-400 dark:text-zinc-500 mb-1.5 px-1">
+            <Layers className="w-3 h-3" /> Active Semester
+          </label>
+          <select
+            value={activeSemester}
+            onChange={(e) => onSelectActiveSemester(e.target.value)}
+            className="w-full px-3 py-2 rounded-xl bg-stone-100 dark:bg-white/[0.06] border border-stone-200 dark:border-white/10 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500"
+          >
+            <option value="All" className="dark:bg-zinc-900">
+              All Semesters
+            </option>
+            {uniqueSemesters.map((sem) => (
+              <option key={sem} value={sem} className="dark:bg-zinc-900">
+                {sem}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        <button
+          onClick={() => setActiveTab('today')}
+          className={navItemClass(activeTab === 'today')}
+        >
+          <span className="flex items-center gap-3">
+            <Home className="w-4 h-4" /> Today
+          </span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('routine')}
+          className={navItemClass(activeTab === 'routine')}
+        >
+          <span className="flex items-center gap-3">
+            <Calendar className="w-4 h-4" /> Routine
+          </span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('Quiz')}
+          className={navItemClass(activeTab === 'Quiz')}
+        >
+          <span className="flex items-center gap-3">
+            <CheckSquare className="w-4 h-4" /> Quizzes
+          </span>
+          {pendingCounts.Quiz > 0 && (
+            <span
+              className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                activeTab === 'Quiz'
+                  ? 'bg-white/20 text-white'
+                  : 'bg-teal-500/15 text-teal-600 dark:text-teal-400'
+              }`}
+            >
+              {pendingCounts.Quiz}
+            </span>
+          )}
+        </button>
+
+        {renderExpandableCategorySection(
+          'Assignment',
+          'Assignments',
+          <ClipboardList className="w-4 h-4" />
+        )}
+
+        {renderExpandableCategorySection(
+          'Midterm',
+          'Midterms',
+          <FileText className="w-4 h-4" />
+        )}
+
+        {renderExpandableCategorySection(
+          'Final',
+          'Finals',
+          <GraduationCap className="w-4 h-4" />
+        )}
+
+        <button
+          onClick={() => setActiveTab('attendance')}
+          className={navItemClass(activeTab === 'attendance')}
+        >
+          <span className="flex items-center gap-3">
+            <Users className="w-4 h-4" /> Attendance
+          </span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('notes')}
+          className={navItemClass(activeTab === 'notes')}
+        >
+          <span className="flex items-center gap-3">
+            <BookOpen className="w-4 h-4" /> Notes
+          </span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('courses')}
+          className={navItemClass(activeTab === 'courses')}
+        >
+          <span className="flex items-center gap-3">
+            <Layers className="w-4 h-4" /> Courses
+          </span>
+        </button>
+      </nav>
+
+      <div className="p-3 border-t border-stone-200/70 dark:border-white/[0.07]">
+        <button
+          onClick={onLogout}
+          className="btn-tactile w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-500/10"
+        >
+          <LogOut className="w-4 h-4" /> Lock Workspace
+        </button>
+      </div>
+    </aside>
+  );
 }
 
 interface MobileHeaderProps {
@@ -46,127 +314,6 @@ interface MobileHeaderProps {
   onLogout: () => void;
 }
 
-interface MobileBottomNavProps {
-  activeTab: TabId;
-  setActiveTab: (tab: TabId) => void;
-  pendingCounts: PendingCounts;
-}
-
-export function Sidebar({
-  activeTab,
-  setActiveTab,
-  uniqueSemesters,
-  activeSemester,
-  onSelectActiveSemester,
-  darkMode,
-  onToggleDarkMode,
-  onLogout,
-  pendingCounts,
-}: SidebarProps) {
-  const navItems: { id: TabId; label: string; icon: React.ReactNode; badge?: number }[] = [
-    { id: 'today', label: 'Today', icon: <Home className="w-4 h-4" /> },
-    { id: 'routine', label: 'Routine', icon: <Calendar className="w-4 h-4" /> },
-    { id: 'Quiz', label: 'Quizzes', icon: <CheckSquare className="w-4 h-4" />, badge: pendingCounts.Quiz },
-    {
-      id: 'Assignment',
-      label: 'Assignments',
-      icon: <ClipboardList className="w-4 h-4" />,
-      badge: pendingCounts.Assignment,
-    },
-    { id: 'Midterm', label: 'Midterms', icon: <FileText className="w-4 h-4" />, badge: pendingCounts.Midterm },
-    { id: 'Final', label: 'Finals', icon: <GraduationCap className="w-4 h-4" />, badge: pendingCounts.Final },
-    { id: 'attendance', label: 'Attendance', icon: <UserCheck className="w-4 h-4" /> },
-    { id: 'notes', label: 'Notes', icon: <NotebookPen className="w-4 h-4" /> },
-    { id: 'courses', label: 'Courses', icon: <BookOpen className="w-4 h-4" /> },
-  ];
-
-  return (
-    <aside className="hidden md:flex md:flex-col md:w-64 md:fixed md:inset-y-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 z-30">
-      <div className="p-5 border-b border-slate-200 dark:border-slate-800">
-        <button
-          onClick={() => setActiveTab('today')}
-          className="flex items-center gap-3 text-left w-full"
-        >
-          <img
-            src="/logo.svg"
-            alt="Track Rakho Logo"
-            className="w-9 h-9 rounded-xl object-contain shrink-0"
-          />
-          <span className="font-extrabold text-xl tracking-tight text-teal-600 dark:text-teal-400">
-            Track Rakho
-          </span>
-        </button>
-
-        {uniqueSemesters.length > 0 && (
-          <select
-            value={activeSemester}
-            onChange={(e) => onSelectActiveSemester(e.target.value)}
-            className="mt-3 w-full px-3 py-2 text-xs font-medium rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
-          >
-            <option value="All">All Semesters</option>
-            {uniqueSemesters.map((sem) => (
-              <option key={sem} value={sem}>
-                {sem}
-              </option>
-            ))}
-          </select>
-        )}
-      </div>
-
-      <nav className="flex-1 overflow-y-auto p-3 space-y-1">
-        {navItems.map((item) => {
-          const active = activeTab === item.id;
-          return (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                active
-                  ? 'bg-teal-600 text-white shadow-sm'
-                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-              }`}
-            >
-              <span className="flex items-center gap-3">
-                {item.icon}
-                {item.label}
-              </span>
-              {typeof item.badge === 'number' && item.badge > 0 && (
-                <span
-                  className={`px-2 py-0.5 text-xs rounded-full font-semibold ${
-                    active
-                      ? 'bg-white/20 text-white'
-                      : 'bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300'
-                  }`}
-                >
-                  {item.badge}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </nav>
-
-      <div className="p-3 border-t border-slate-200 dark:border-slate-800 space-y-2">
-        <button
-          onClick={onToggleDarkMode}
-          className="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl text-sm font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-        >
-          {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          {darkMode ? 'Light Mode' : 'Dark Mode'}
-        </button>
-
-        <button
-          onClick={onLogout}
-          className="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl text-sm font-medium bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-950/70 transition-colors"
-        >
-          <LogOut className="w-4 h-4" />
-          Lock / Logout
-        </button>
-      </div>
-    </aside>
-  );
-}
-
 export function MobileHeader({
   setActiveTab,
   uniqueSemesters,
@@ -177,19 +324,17 @@ export function MobileHeader({
   onLogout,
 }: MobileHeaderProps) {
   return (
-    <header className="md:hidden sticky top-0 z-30 flex items-center justify-between gap-2 px-4 py-3 bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-200 dark:border-slate-800">
+    <header className="md:hidden sticky top-0 z-30 flex items-center justify-between px-4 py-3 border-b border-stone-200/80 dark:border-white/[0.08] bg-white/90 dark:bg-[#0d1017]/95 backdrop-blur-xl">
       <button
         onClick={() => setActiveTab('today')}
-        className="flex items-center gap-2 shrink-0"
+        className="flex items-center gap-2 text-left"
       >
         <img
-          src="/logo.svg"
-          alt="Track Rakho Logo"
-          className="w-7 h-7 rounded-lg object-contain shrink-0"
+          src="/logo.png?v=2"
+          alt="Track Rakho"
+          className="w-7 h-7 rounded-lg object-cover"
         />
-        <span className="font-extrabold text-lg text-teal-600 dark:text-teal-400">
-          Track Rakho
-        </span>
+        <span className="font-bold text-base tracking-tight">Track Rakho</span>
       </button>
 
       <div className="flex items-center gap-2">
@@ -197,30 +342,30 @@ export function MobileHeader({
           <select
             value={activeSemester}
             onChange={(e) => onSelectActiveSemester(e.target.value)}
-            className="max-w-[130px] px-2.5 py-1.5 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200"
+            aria-label="Select semester"
+            className="px-2.5 py-1.5 rounded-xl bg-stone-100 dark:bg-white/[0.06] border border-stone-200 dark:border-white/10 text-xs font-semibold"
           >
-            <option value="All">All Semesters</option>
+            <option value="All" className="dark:bg-zinc-900">
+              All
+            </option>
             {uniqueSemesters.map((sem) => (
-              <option key={sem} value={sem}>
+              <option key={sem} value={sem} className="dark:bg-zinc-900">
                 {sem}
               </option>
             ))}
           </select>
         )}
-
         <button
           onClick={onToggleDarkMode}
           aria-label="Toggle theme"
-          className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200"
+          className="btn-tactile p-2 rounded-xl bg-stone-100 dark:bg-white/[0.06]"
         >
           {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         </button>
-
         <button
           onClick={onLogout}
-          aria-label="Logout"
-          title="Lock / Logout"
-          className="p-2 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400"
+          aria-label="Lock workspace"
+          className="btn-tactile p-2 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400"
         >
           <LogOut className="w-4 h-4" />
         </button>
@@ -229,54 +374,52 @@ export function MobileHeader({
   );
 }
 
+interface MobileBottomNavProps {
+  activeTab: TabId;
+  setActiveTab: (tab: TabId) => void;
+  pendingCounts: Record<AssessmentType, number>;
+}
+
 export function MobileBottomNav({
   activeTab,
   setActiveTab,
   pendingCounts,
 }: MobileBottomNavProps) {
   const items: { id: TabId; label: string; icon: React.ReactNode; badge?: number }[] = [
-    { id: 'today', label: 'Today', icon: <Home className="w-5 h-5" /> },
-    { id: 'routine', label: 'Routine', icon: <Calendar className="w-5 h-5" /> },
-    { id: 'Quiz', label: 'Quizzes', icon: <CheckSquare className="w-5 h-5" />, badge: pendingCounts.Quiz },
+    { id: 'today', label: 'Today', icon: <Home className="w-4 h-4" /> },
+    { id: 'routine', label: 'Routine', icon: <Calendar className="w-4 h-4" /> },
     {
       id: 'Assignment',
-      label: 'Assignments',
-      icon: <ClipboardList className="w-5 h-5" />,
+      label: 'Assign',
+      icon: <ClipboardList className="w-4 h-4" />,
       badge: pendingCounts.Assignment,
     },
-    { id: 'Midterm', label: 'Midterms', icon: <FileText className="w-5 h-5" />, badge: pendingCounts.Midterm },
-    { id: 'Final', label: 'Finals', icon: <GraduationCap className="w-5 h-5" />, badge: pendingCounts.Final },
-    { id: 'attendance', label: 'Attendance', icon: <UserCheck className="w-5 h-5" /> },
-    { id: 'notes', label: 'Notes', icon: <NotebookPen className="w-5 h-5" /> },
-    { id: 'courses', label: 'Courses', icon: <BookOpen className="w-5 h-5" /> },
+    { id: 'attendance', label: 'Attend', icon: <Users className="w-4 h-4" /> },
+    { id: 'courses', label: 'Courses', icon: <Layers className="w-4 h-4" /> },
   ];
 
   return (
-    <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-t border-slate-200 dark:border-slate-800 px-2 py-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-      <div className="flex items-center gap-1 w-max min-w-full">
-        {items.map((item) => {
-          const active = activeTab === item.id;
-          return (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`relative shrink-0 min-w-[68px] flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-xl text-[11px] font-medium whitespace-nowrap transition-colors ${
-                active
-                  ? 'bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400'
-                  : 'text-slate-500 dark:text-slate-400'
-              }`}
-            >
-              {item.icon}
-              <span>{item.label}</span>
-              {typeof item.badge === 'number' && item.badge > 0 && (
-                <span className="absolute top-0.5 right-2 min-w-[16px] h-4 px-1 rounded-full bg-teal-600 text-white text-[10px] font-bold flex items-center justify-center">
-                  {item.badge}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
+    <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 border-t border-stone-200/80 dark:border-white/[0.08] bg-white/95 dark:bg-[#0d1017]/95 backdrop-blur-xl px-2 py-1.5 flex items-center justify-around">
+      {items.map((item) => {
+        const isActive = activeTab === item.id;
+        return (
+          <button
+            key={item.id}
+            onClick={() => setActiveTab(item.id)}
+            className={`btn-tactile relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl text-[11px] font-semibold ${
+              isActive
+                ? 'text-teal-600 dark:text-teal-400 bg-teal-500/10'
+                : 'text-stone-500 dark:text-zinc-400'
+            }`}
+          >
+            {item.icon}
+            <span>{item.label}</span>
+            {item.badge && item.badge > 0 ? (
+              <span className="absolute top-1 right-2 w-2 h-2 rounded-full bg-teal-500" />
+            ) : null}
+          </button>
+        );
+      })}
     </nav>
   );
 }

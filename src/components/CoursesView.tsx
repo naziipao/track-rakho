@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Plus, Layers, Trash2, User } from 'lucide-react';
+import { Plus, Layers, Trash2, User, Pencil } from 'lucide-react';
 import { Course } from '@/lib/types';
 
 interface CoursesViewProps {
@@ -11,6 +11,7 @@ interface CoursesViewProps {
   setCourseTabFilter: (sem: string) => void;
   coursesBySemester: Record<string, Course[]>;
   onOpenAddCourse: (defaultSemester?: string) => void;
+  onEditCourse: (course: Course) => void;
   onDeleteCourse: (id: string) => void;
 }
 
@@ -21,6 +22,7 @@ export default function CoursesView({
   setCourseTabFilter,
   coursesBySemester,
   onOpenAddCourse,
+  onEditCourse,
   onDeleteCourse,
 }: CoursesViewProps) {
   return (
@@ -107,20 +109,36 @@ export default function CoursesView({
                       className="h-1.5 w-full absolute top-0 left-0"
                       style={{ backgroundColor: course.color }}
                     />
-                    <div className="flex items-start justify-between mt-1">
-                      <span
-                        className="text-xs font-bold px-2.5 py-1 rounded-lg text-white shadow-sm"
-                        style={{ backgroundColor: course.color }}
-                      >
-                        {course.code}
-                      </span>
-                      <button
-                        onClick={() => onDeleteCourse(course.id)}
-                        title="Delete course"
-                        className="btn-tactile text-stone-400 dark:text-zinc-400 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-rose-500/12 active:bg-rose-500/25 active:text-rose-500 p-2 rounded-xl"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                    <div className="flex items-start justify-between gap-2 mt-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span
+                          className="text-xs font-bold px-2.5 py-1 rounded-lg text-white shadow-sm"
+                          style={{ backgroundColor: course.color }}
+                        >
+                          {course.code}
+                        </span>
+                        {course.section && (
+                          <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-stone-100/90 dark:bg-white/[0.08] text-stone-700 dark:text-zinc-200 border border-stone-200/70 dark:border-white/10">
+                            Sec {course.section}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => onEditCourse(course)}
+                          title="Edit course"
+                          className="btn-tactile text-stone-400 dark:text-zinc-400 hover:text-teal-600 dark:hover:text-teal-300 hover:bg-teal-500/12 active:bg-teal-500/20 p-2 rounded-xl"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => onDeleteCourse(course.id)}
+                          title="Delete course"
+                          className="btn-tactile text-stone-400 dark:text-zinc-400 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-rose-500/12 active:bg-rose-500/25 active:text-rose-500 p-2 rounded-xl"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                     <h4 className="font-bold text-base mt-3">{course.name}</h4>
                     <p className="text-xs font-medium text-stone-500 dark:text-zinc-400 mt-2 flex items-center gap-1.5">

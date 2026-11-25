@@ -1,4 +1,7 @@
 export type AssessmentType = 'Quiz' | 'Assignment' | 'Midterm' | 'Final';
+export type AssignmentCategory = 'Theory' | 'Lab';
+export type ExamCategory = 'Theory' | 'Lab';
+export type AssessmentCategory = AssignmentCategory | ExamCategory;
 
 export const ASSESSMENT_TABS: AssessmentType[] = [
   'Quiz',
@@ -25,19 +28,19 @@ export const ASSESSMENT_TAB_META: Record<
   Assignment: {
     plural: 'Assignments',
     heading: 'Assignments',
-    subtitle: 'Track homework, lab tasks, project submissions, and deadlines.',
+    subtitle: 'Track theory & lab homework, tasks, project submissions, and deadlines.',
     buttonLabel: 'Add Assignment',
   },
   Midterm: {
     plural: 'Midterms',
     heading: 'Midterm Exams',
-    subtitle: 'Your midterm exam routine, coverage topics, and countdowns.',
+    subtitle: 'Your separated theory & lab midterm exam schedule, coverage topics, and countdowns.',
     buttonLabel: 'Add Midterm',
   },
   Final: {
     plural: 'Finals',
     heading: 'Final Exams',
-    subtitle: 'Your final exam schedule, exam rooms, and syllabus coverage.',
+    subtitle: 'Your separated theory & lab final exam schedule, exam rooms, and syllabus coverage.',
     buttonLabel: 'Add Final',
   },
 };
@@ -77,6 +80,7 @@ export interface Course {
   id: string;
   semester: string;
   code: string;
+  section?: string;
   name: string;
   faculty: string;
   color: string;
@@ -97,6 +101,7 @@ export interface Assessment {
   id: string;
   course_id: string;
   type: AssessmentType;
+  category?: AssessmentCategory | null;
   title: string;
   topics?: string | null;
   due_date: string;

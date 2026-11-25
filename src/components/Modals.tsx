@@ -3,6 +3,7 @@
 import React from 'react';
 import { X } from 'lucide-react';
 import {
+  AssessmentCategory,
   AssessmentType,
   Course,
   COURSE_COLORS,
@@ -14,6 +15,7 @@ interface ModalsProps {
   activeModal: ModalType;
   onClose: () => void;
   saving: boolean;
+  editingCourseId: string | null;
   editingAssessmentId: string | null;
   uniqueSemesters: string[];
   courses: Course[];
@@ -21,6 +23,7 @@ interface ModalsProps {
   courseForm: {
     semester: string;
     code: string;
+    section: string;
     name: string;
     faculty: string;
     color: string;
@@ -29,6 +32,7 @@ interface ModalsProps {
     React.SetStateAction<{
       semester: string;
       code: string;
+      section: string;
       name: string;
       faculty: string;
       color: string;
@@ -55,6 +59,7 @@ interface ModalsProps {
   assessmentForm: {
     course_id: string;
     type: AssessmentType;
+    category: AssessmentCategory;
     title: string;
     topics: string;
     due_date: string;
@@ -64,6 +69,7 @@ interface ModalsProps {
     React.SetStateAction<{
       course_id: string;
       type: AssessmentType;
+      category: AssessmentCategory;
       title: string;
       topics: string;
       due_date: string;
@@ -90,6 +96,7 @@ export default function Modals({
   activeModal,
   onClose,
   saving,
+  editingCourseId,
   editingAssessmentId,
   uniqueSemesters,
   courses,
@@ -110,25 +117,34 @@ export default function Modals({
   if (!activeModal) return null;
 
   const isExam = assessmentForm.type === 'Midterm' || assessmentForm.type === 'Final';
+  const hasCategory =
+    assessmentForm.type === 'Assignment' ||
+    assessmentForm.type === 'Midterm' ||
+    assessmentForm.type === 'Final';
+  const isEditingCourse = Boolean(editingCourseId);
   const isEditingAssessment = Boolean(editingAssessmentId);
   const inputClass =
     'w-full px-3.5 py-2.5 rounded-xl bg-stone-100/90 dark:bg-white/[0.06] border border-stone-200 dark:border-white/10 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all';
+
+  const categoryLabel =
+    assessmentForm.type === 'Assignment' ? 'Assignment Type' : 'Exam Type';
 
   return (
     <div className="fixed inset-0 z-50 bg-black/65 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div className="w-full sm:max-w-md bg-white dark:bg-[#12151f] rounded-t-3xl sm:rounded-3xl border border-stone-200 dark:border-white/12 p-6 shadow-[0_24px_64px_rgba(0,0,0,0.65)]">
         <div className="flex items-center justify-between mb-5">
           <h3 className="font-bold text-lg tracking-tight">
-            {activeModal === 'course' && 'Add Course to Semester'}
+            {activeModal === 'course' &&
+              (isEditingCourse ? 'Edit Course' : 'Add Course to Semester')}
             {activeModal === 'routine' && 'Add Class to Routine'}
             {activeModal === 'assessment' &&
               (isEditingAssessment
                 ? isExam
-                  ? `Edit ${assessmentForm.type} Exam`
-                  : `Edit ${assessmentForm.type}`
+                  ? `Edit ${assessmentForm.category} ${assessmentForm.type} Exam`
+                  : `Edit ${assessmentForm.category} ${assessmentForm.type}`
                 : isExam
-                  ? `Add ${assessmentForm.type} Exam`
-                  : `Add ${assessmentForm.type}`)}
+                  ? `Add ${assessmentForm.category} ${assessmentForm.type} Exam`
+                  : `Add ${assessmentForm.category} ${assessmentForm.type}`)}
             {activeModal === 'note' && 'Create Quick Note'}
           </h3>
           <button
@@ -141,7 +157,7 @@ export default function Modals({
           </button>
         </div>
 
-        {/* MODAL 1: ADD COURSE WITH SEMESTER */}
+        {/* MODAL 1: ADD / EDIT COURSE WITH SEMESTER & SECTION */}
         {activeModal === 'course' && (
           <form onSubmit={onAddCourse} className="space-y-4">
             <div>
@@ -163,18 +179,33 @@ export default function Modals({
                 ))}
               </datalist>
             </div>
-            <div>
-              <label className="block text-xs font-semibold mb-1 text-stone-600 dark:text-zinc-300">
-                Course Code
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="e.g., CSE340"
-                value={courseForm.code}
-                onChange={(e) => setCourseForm({ ...courseForm, code: e.target.value })}
-                className={inputClass}
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold mb-1 text-stone-600 dark:text-zinc-300">
+                  Course Code
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g., CSE340"
+                  value={courseForm.code}
+                  onChange={(e) => setCourseForm({ ...courseForm, code: e.target.value })}
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold mb-1 text-stone-600 dark:text-zinc-300">
+                  Section
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g., 01 or 12"
+                  value={courseForm.section}
+                  onChange={(e) => setCourseForm({ ...courseForm, section: e.target.value })}
+                  className={inputClass}
+                />
+              </div>
             </div>
             <div>
               <label className="block text-xs font-semibold mb-1 text-stone-600 dark:text-zinc-300">
@@ -227,7 +258,7 @@ export default function Modals({
               disabled={saving}
               className="btn-tactile w-full py-3 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 disabled:opacity-50 text-white font-semibold text-sm mt-2 shadow-lg shadow-teal-500/25"
             >
-              {saving ? 'Saving...' : 'Save Course'}
+              {saving ? 'Saving...' : isEditingCourse ? 'Update Course' : 'Save Course'}
             </button>
           </form>
         )}
@@ -246,7 +277,8 @@ export default function Modals({
               >
                 {activeCourses.map((c) => (
                   <option key={c.id} value={c.id} className="dark:bg-zinc-900">
-                    {c.code} — {c.name} ({c.faculty})
+                    {c.code}
+                    {c.section ? ` (Sec ${c.section})` : ''} — {c.name} ({c.faculty})
                   </option>
                 ))}
               </select>
@@ -330,11 +362,39 @@ export default function Modals({
               >
                 {activeCourses.map((c) => (
                   <option key={c.id} value={c.id} className="dark:bg-zinc-900">
-                    {c.code} — {c.name}
+                    {c.code}
+                    {c.section ? ` (Sec ${c.section})` : ''} — {c.name}
                   </option>
                 ))}
               </select>
             </div>
+
+            {hasCategory && (
+              <div>
+                <label className="block text-xs font-semibold mb-1.5 text-stone-600 dark:text-zinc-300">
+                  {categoryLabel}
+                </label>
+                <div className="grid grid-cols-2 gap-2.5">
+                  {(['Theory', 'Lab'] as AssessmentCategory[]).map((cat) => {
+                    const selected = assessmentForm.category === cat;
+                    return (
+                      <button
+                        type="button"
+                        key={cat}
+                        onClick={() => setAssessmentForm({ ...assessmentForm, category: cat })}
+                        className={`btn-tactile py-2.5 px-3 rounded-xl text-xs font-semibold border transition-all ${
+                          selected
+                            ? 'bg-gradient-to-r from-teal-600 to-emerald-600 text-white border-teal-500 shadow-sm'
+                            : 'bg-stone-100/90 dark:bg-white/[0.06] text-stone-700 dark:text-zinc-300 border-stone-200 dark:border-white/10'
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {!isExam && (
               <div>
@@ -345,7 +405,9 @@ export default function Modals({
                   type="text"
                   required
                   placeholder={
-                    assessmentForm.type === 'Quiz' ? 'e.g., Quiz 2' : 'e.g., Assignment 1'
+                    assessmentForm.type === 'Quiz'
+                      ? 'e.g., Quiz 2'
+                      : `e.g., ${assessmentForm.category} Assignment 1`
                   }
                   value={assessmentForm.title}
                   onChange={(e) => setAssessmentForm({ ...assessmentForm, title: e.target.value })}
@@ -374,7 +436,11 @@ export default function Modals({
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g., UB40203 or Exam Hall 2"
+                  placeholder={
+                    assessmentForm.category === 'Lab'
+                      ? 'e.g., Computer Lab 3 or Hardware Lab'
+                      : 'e.g., UB40203 or Exam Hall 2'
+                  }
                   value={assessmentForm.room}
                   onChange={(e) => setAssessmentForm({ ...assessmentForm, room: e.target.value })}
                   className={inputClass}
@@ -390,7 +456,9 @@ export default function Modals({
                 rows={isExam ? 3 : 2}
                 placeholder={
                   isExam
-                    ? 'e.g., Chapters 1-5, Lectures 1-12, Lab 1-4'
+                    ? assessmentForm.category === 'Lab'
+                      ? 'e.g., Lab 1-5, Vivado / SQL / Packet Tracer tasks'
+                      : 'e.g., Chapters 1-5, Lectures 1-12'
                     : 'e.g., Linked Lists, Stacks & Queues (Lectures 4-7)'
                 }
                 value={assessmentForm.topics}
@@ -428,7 +496,8 @@ export default function Modals({
                 <option value="General" className="dark:bg-zinc-900">General</option>
                 {courses.map((c) => (
                   <option key={c.id} value={c.code} className="dark:bg-zinc-900">
-                    {c.code} — {c.name}
+                    {c.code}
+                    {c.section ? ` (Sec ${c.section})` : ''} — {c.name}
                   </option>
                 ))}
               </select>

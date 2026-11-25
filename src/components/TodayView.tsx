@@ -130,10 +130,17 @@ export default function TodayView({
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-bold text-sm tracking-tight">
-                        {cls.courses?.code}
-                      </span>
-                      <span className="text-xs font-semibold px-2.5 py-0.5 rounded-lg bg-stone-100/90 dark:bg-white/[0.07] text-stone-700 dark:text-zinc-300 border border-stone-200/70 dark:border-white/10">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="font-bold text-sm tracking-tight">
+                          {cls.courses?.code}
+                        </span>
+                        {cls.courses?.section && (
+                          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-stone-100/90 dark:bg-white/[0.08] text-stone-700 dark:text-zinc-200 border border-stone-200/70 dark:border-white/10 shrink-0">
+                            Sec {cls.courses.section}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-xs font-semibold px-2.5 py-0.5 rounded-lg bg-stone-100/90 dark:bg-white/[0.07] text-stone-700 dark:text-zinc-300 border border-stone-200/70 dark:border-white/10 shrink-0">
                         {formatTime12Hour(cls.start_time)} – {formatTime12Hour(cls.end_time)}
                       </span>
                     </div>
@@ -202,9 +209,19 @@ export default function TodayView({
                           >
                             {item.type}
                           </button>
+                          {(item.type === 'Assignment' || isExam) && item.category && (
+                            <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-teal-500/12 dark:bg-teal-400/15 text-teal-700 dark:text-teal-300 border border-teal-500/25">
+                              {item.category}
+                            </span>
+                          )}
                           {!isExam && item.title && (
                             <span className="text-xs font-medium px-2 py-0.5 rounded-md bg-stone-100/90 dark:bg-white/[0.07] text-stone-700 dark:text-zinc-300 border border-stone-200/70 dark:border-white/10">
                               {item.title}
+                            </span>
+                          )}
+                          {isExam && item.courses?.section && (
+                            <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-stone-100/90 dark:bg-white/[0.07] text-stone-700 dark:text-zinc-200 border border-stone-200/70 dark:border-white/10">
+                              Sec {item.courses.section}
                             </span>
                           )}
                           {item.room && (

@@ -103,8 +103,13 @@ export default function RoutineView({
                   style={{ backgroundColor: cls.courses?.color || '#14b8a6' }}
                 />
                 <div>
-                  <div className="flex items-center gap-2.5 flex-wrap">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-bold text-base">{cls.courses?.code}</span>
+                    {cls.courses?.section && (
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-stone-100/90 dark:bg-white/[0.08] text-stone-700 dark:text-zinc-200 border border-stone-200/70 dark:border-white/10">
+                        Sec {cls.courses.section}
+                      </span>
+                    )}
                     <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-teal-500/12 dark:bg-teal-400/15 text-teal-700 dark:text-teal-300 border border-teal-500/25">
                       {formatTime12Hour(cls.start_time)} – {formatTime12Hour(cls.end_time)}
                     </span>
