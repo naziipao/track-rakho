@@ -17,10 +17,59 @@ import {
   ChevronDown,
   Menu,
   X,
+  Palette,
+  Check,
 } from 'lucide-react';
 import { AssessmentCategory, TabId } from '@/lib/types';
+import { COLOR_THEMES, ColorThemeId, THEME_LIST, ThemeConfig } from '@/lib/themes';
 
 export type CategorizedAssessmentType = 'Assignment' | 'Midterm' | 'Final';
+
+const THEME_STORAGE_KEY = 'track-rakho-theme';
+const THEME_EVENT_NAME = 'track-rakho-theme-change';
+
+function useSyncedColorTheme(
+  controlledTheme?: ColorThemeId,
+  onSelectControlled?: (theme: ColorThemeId) => void
+): [ColorThemeId, (theme: ColorThemeId) => void] {
+  const [internalTheme, setInternalTheme] = useState<ColorThemeId>('teal');
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(THEME_STORAGE_KEY) as ColorThemeId | null;
+      if (saved && saved in COLOR_THEMES) {
+        setInternalTheme(saved);
+      }
+    } catch {
+      // Ignore storage access errors
+    }
+
+    const handleThemeEvent = (e: Event) => {
+      const next = (e as CustomEvent<ColorThemeId>).detail;
+      if (next && next in COLOR_THEMES) {
+        setInternalTheme(next);
+      }
+    };
+
+    window.addEventListener(THEME_EVENT_NAME, handleThemeEvent);
+    return () => window.removeEventListener(THEME_EVENT_NAME, handleThemeEvent);
+  }, []);
+
+  const activeTheme = controlledTheme ?? internalTheme;
+
+  const selectTheme = (next: ColorThemeId) => {
+    setInternalTheme(next);
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, next);
+    } catch {
+      // Ignore storage access errors
+    }
+    window.dispatchEvent(new CustomEvent<ColorThemeId>(THEME_EVENT_NAME, { detail: next }));
+    onSelectControlled?.(next);
+  };
+
+  return [activeTheme, selectTheme];
+}
 
 interface PendingCounts {
   Quiz: number;
@@ -48,6 +97,8 @@ interface SidebarProps {
   onSelectActiveSemester: (sem: string) => void;
   darkMode: boolean;
   onToggleDarkMode: () => void;
+  colorTheme?: ColorThemeId;
+  onSelectColorTheme?: (theme: ColorThemeId) => void;
   onLogout: () => void;
   pendingCounts: PendingCounts;
   subCounts: SubCounts;
@@ -66,6 +117,8 @@ interface MobileHeaderProps {
   onSelectActiveSemester: (sem: string) => void;
   darkMode: boolean;
   onToggleDarkMode: () => void;
+  colorTheme?: ColorThemeId;
+  onSelectColorTheme?: (theme: ColorThemeId) => void;
   onLogout: () => void;
   pendingCounts: PendingCounts;
   subCounts: SubCounts;
@@ -75,6 +128,7 @@ interface MobileBottomNavProps {
   activeTab: TabId;
   setActiveTab: (tab: TabId) => void;
   pendingCounts: PendingCounts;
+  colorTheme?: ColorThemeId;
   categoryFilters?: Record<CategorizedAssessmentType, AssessmentCategory>;
   onSelectCategorizedAssessment?: (
     type: CategorizedAssessmentType,
@@ -119,6 +173,101 @@ const NAV_ITEMS: {
   { id: 'courses', label: 'Courses', icon: Library },
 ];
 
+// --- COMPACT BOUNCING THEME PICKER ---
+function ThemePicker({
+  colorTheme,
+  onSelectColorTheme,
+  align = 'up',
+}: {
+  colorTheme: ColorThemeId;
+  onSelectColorTheme: (theme: ColorThemeId) => void;
+  align?: 'up' | 'down';
+}) {
+  const [open, setOpen] = useState(false);
+  const [bumping, setBumping] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!bumping) return;
+    const t = setTimeout(() => setBumping(false), 220);
+    return () => clearTimeout(t);
+  }, [bumping]);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, [open]);
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        onClick={(e) => {
+          e.currentTarget.blur();
+          setBumping(false);
+          requestAnimationFrame(() => setBumping(true));
+          setOpen((prev) => !prev);
+        }}
+        aria-label="Select color theme"
+        className={`p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 select-none cursor-pointer [-webkit-tap-highlight-color:transparent] focus:outline-none transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-90 ${
+          bumping ? '-translate-y-0.5 scale-105' : 'translate-y-0 scale-100'
+        }`}
+      >
+        <Palette className="w-4 h-4" />
+      </button>
+
+      {open && (
+        <div
+          className={`absolute right-0 z-50 w-44 p-2 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-xl ${
+            align === 'up' ? 'bottom-12' : 'top-11'
+          }`}
+        >
+          <p className="px-2 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            Color Theme
+          </p>
+          <div className="space-y-1">
+            {THEME_LIST.map((t) => {
+              const selected = colorTheme === t.id;
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={(e) => {
+                    e.currentTarget.blur();
+                    onSelectColorTheme(t.id);
+                    setOpen(false);
+                  }}
+                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-medium select-none cursor-pointer [-webkit-tap-highlight-color:transparent] focus:outline-none transition-transform duration-150 active:scale-95 ${
+                    selected
+                      ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white'
+                      : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                  }`}
+                >
+                  <span className="flex items-center gap-2.5">
+                    <span
+                      className={`w-3.5 h-3.5 rounded-full ${t.swatch} ring-2 ring-white dark:ring-slate-900 shadow-xs`}
+                    />
+                    <span>{t.label}</span>
+                  </span>
+                  {selected && (
+                    <Check className="w-3.5 h-3.5 text-slate-700 dark:text-slate-200" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- SHARED NAV LIST WITH COLLAPSIBLE DROPDOWNS ---
 function NavMenuList({
   activeTab,
@@ -127,6 +276,7 @@ function NavMenuList({
   onSelectCategorizedAssessment,
   pendingCounts,
   subCounts,
+  theme,
   onItemSelect,
 }: {
   activeTab: TabId;
@@ -138,6 +288,7 @@ function NavMenuList({
   ) => void;
   pendingCounts: PendingCounts;
   subCounts: SubCounts;
+  theme: ThemeConfig;
   onItemSelect?: () => void;
 }) {
   const [expanded, setExpanded] = useState<Record<CategorizedAssessmentType, boolean>>({
@@ -197,7 +348,7 @@ function NavMenuList({
                 isBumped ? 'translate-x-1.5 scale-[1.02]' : 'translate-x-0 scale-100'
               } ${
                 isActive
-                  ? 'bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300'
+                  ? theme.activeNav
                   : 'bg-transparent text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
               }`}
             >
@@ -212,14 +363,16 @@ function NavMenuList({
 
               <span className="flex items-center gap-1.5">
                 {badge > 0 && (
-                  <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-teal-600 text-white">
+                  <span
+                    className={`px-2 py-0.5 text-xs font-semibold rounded-full ${theme.badge}`}
+                  >
                     {badge}
                   </span>
                 )}
                 {isDropdown && (
                   <ChevronDown
                     className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${
-                      isOpen ? 'rotate-180 text-teal-600 dark:text-teal-400' : ''
+                      isOpen ? `rotate-180 ${theme.chevronActive}` : ''
                     }`}
                   />
                 )}
@@ -230,7 +383,8 @@ function NavMenuList({
               <div className="ml-5 mt-1 mb-1.5 pl-3 border-l-2 border-slate-200 dark:border-slate-700 space-y-1">
                 {(['Theory', 'Lab'] as AssessmentCategory[]).map((cat) => {
                   const subKey = `${item.categorized}-${cat}`;
-                  const subActive = isActive && categoryFilters[item.categorized!] === cat;
+                  const subActive =
+                    isActive && categoryFilters[item.categorized!] === cat;
                   const count = subCounts[item.categorized!][cat];
                   const isSubBumped = bumpedKey === subKey;
 
@@ -250,7 +404,7 @@ function NavMenuList({
                           : 'translate-x-0 scale-100'
                       } ${
                         subActive
-                          ? 'bg-teal-600 text-white shadow-sm'
+                          ? theme.activeSubNav
                           : 'bg-transparent text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
                       }`}
                     >
@@ -287,10 +441,17 @@ export function Sidebar({
   onSelectActiveSemester,
   darkMode,
   onToggleDarkMode,
+  colorTheme,
+  onSelectColorTheme,
   onLogout,
   pendingCounts,
   subCounts,
 }: SidebarProps) {
+  const [resolvedTheme, handleSelectTheme] = useSyncedColorTheme(
+    colorTheme,
+    onSelectColorTheme
+  );
+  const theme = COLOR_THEMES[resolvedTheme];
   const [brandBouncing, setBrandBouncing] = useState(false);
   const [bumpedAction, setBumpedAction] = useState<'theme' | 'logout' | null>(null);
 
@@ -326,7 +487,7 @@ export function Sidebar({
       <div className="relative p-5 border-b border-slate-200 dark:border-slate-800 flex items-center gap-3 shrink-0 overflow-hidden">
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -top-6 left-4 w-44 h-16 rounded-full bg-gradient-to-r from-violet-500/20 via-teal-400/20 to-emerald-400/15 blur-2xl"
+          className={`pointer-events-none absolute -top-6 left-4 w-44 h-16 rounded-full bg-gradient-to-r ${theme.brandHeaderGlow} blur-2xl transition-colors duration-300`}
         />
         <button
           type="button"
@@ -341,12 +502,12 @@ export function Sidebar({
           <div className="relative shrink-0">
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute -inset-1 rounded-2xl bg-gradient-to-tr from-violet-600/45 via-indigo-500/35 to-teal-400/45 blur-md opacity-80 group-hover:opacity-100 transition-opacity duration-300"
+              className={`pointer-events-none absolute -inset-1 rounded-2xl bg-gradient-to-tr ${theme.logoAura} blur-md opacity-80 group-hover:opacity-100 transition-all duration-300`}
             />
             <img
               src="/logo.svg?v=2"
               alt="Track Rakho"
-              className={`relative w-9 h-9 rounded-xl object-cover ring-1 ring-white/40 dark:ring-indigo-300/30 shadow-[0_0_18px_-2px_rgba(124,58,237,0.5)] transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:scale-105 group-active:scale-90 group-active:-rotate-6 ${
+              className={`relative w-9 h-9 rounded-xl object-cover ring-1 ring-white/40 dark:ring-white/20 ${theme.logoShadow} transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:scale-105 group-active:scale-90 group-active:-rotate-6 ${
                 brandBouncing ? 'rotate-6 scale-110' : ''
               }`}
             />
@@ -355,9 +516,11 @@ export function Sidebar({
           <div className="relative">
             <span
               aria-hidden="true"
-              className="pointer-events-none absolute -inset-x-1.5 -inset-y-0.5 rounded-lg bg-gradient-to-r from-teal-400/25 via-emerald-400/20 to-violet-500/25 blur-md opacity-75 group-hover:opacity-100 transition-opacity duration-300"
+              className={`pointer-events-none absolute -inset-x-1.5 -inset-y-0.5 rounded-lg bg-gradient-to-r ${theme.brandTextAura} blur-md opacity-75 group-hover:opacity-100 transition-all duration-300`}
             />
-            <span className="relative font-extrabold text-lg tracking-tight bg-gradient-to-r from-slate-900 via-teal-800 to-indigo-900 dark:from-white dark:via-teal-100 dark:to-indigo-200 bg-clip-text text-transparent drop-shadow-[0_0_10px_rgba(20,184,166,0.28)] dark:drop-shadow-[0_0_14px_rgba(45,212,191,0.55)]">
+            <span
+              className={`relative font-extrabold text-lg tracking-tight bg-gradient-to-r bg-clip-text text-transparent ${theme.brandText}`}
+            >
               Track Rakho
             </span>
           </div>
@@ -368,7 +531,7 @@ export function Sidebar({
         <select
           value={activeSemester}
           onChange={(e) => onSelectActiveSemester(e.target.value)}
-          className="w-full px-3 py-2 text-sm rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500"
+          className={`w-full px-3 py-2 text-sm rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 ${theme.focusRing}`}
         >
           <option value="All">All Semesters</option>
           {uniqueSemesters.map((sem) => (
@@ -386,6 +549,7 @@ export function Sidebar({
         onSelectCategorizedAssessment={onSelectCategorizedAssessment}
         pendingCounts={pendingCounts}
         subCounts={subCounts}
+        theme={theme}
       />
 
       <div className="p-3 border-t border-slate-200 dark:border-slate-800 flex items-center gap-2 shrink-0">
@@ -417,6 +581,13 @@ export function Sidebar({
           )}
           <span>{darkMode ? 'Light' : 'Dark'}</span>
         </button>
+
+        <ThemePicker
+          colorTheme={resolvedTheme}
+          onSelectColorTheme={handleSelectTheme}
+          align="up"
+        />
+
         <button
           type="button"
           onClick={(e) => {
@@ -453,10 +624,17 @@ export function MobileHeader({
   onSelectActiveSemester,
   darkMode,
   onToggleDarkMode,
+  colorTheme,
+  onSelectColorTheme,
   onLogout,
   pendingCounts,
   subCounts,
 }: MobileHeaderProps) {
+  const [resolvedTheme, handleSelectTheme] = useSyncedColorTheme(
+    colorTheme,
+    onSelectColorTheme
+  );
+  const theme = COLOR_THEMES[resolvedTheme];
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [brandBouncing, setBrandBouncing] = useState(false);
   const [bumpedAction, setBumpedAction] = useState<'theme' | 'logout' | null>(null);
@@ -518,17 +696,19 @@ export function MobileHeader({
               <div className="relative shrink-0">
                 <div
                   aria-hidden="true"
-                  className="pointer-events-none absolute -inset-0.5 rounded-xl bg-gradient-to-tr from-violet-600/40 via-indigo-500/30 to-teal-400/40 blur-sm opacity-80"
+                  className={`pointer-events-none absolute -inset-0.5 rounded-xl bg-gradient-to-tr ${theme.logoAura} blur-sm opacity-80`}
                 />
                 <img
                   src="/logo.svg?v=2"
                   alt="Track Rakho"
-                  className={`relative w-8 h-8 rounded-lg object-cover ring-1 ring-white/40 dark:ring-indigo-300/30 shadow-[0_0_14px_-2px_rgba(124,58,237,0.45)] transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-active:scale-90 group-active:-rotate-6 ${
+                  className={`relative w-8 h-8 rounded-lg object-cover ring-1 ring-white/40 dark:ring-white/20 ${theme.logoShadow} transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-active:scale-90 group-active:-rotate-6 ${
                     brandBouncing ? 'rotate-6 scale-110' : ''
                   }`}
                 />
               </div>
-              <span className="font-extrabold text-sm tracking-tight whitespace-nowrap bg-gradient-to-r from-slate-900 via-teal-800 to-indigo-900 dark:from-white dark:via-teal-100 dark:to-indigo-200 bg-clip-text text-transparent drop-shadow-[0_0_8px_rgba(20,184,166,0.25)] dark:drop-shadow-[0_0_12px_rgba(45,212,191,0.5)]">
+              <span
+                className={`font-extrabold text-sm tracking-tight whitespace-nowrap bg-gradient-to-r bg-clip-text text-transparent ${theme.brandText}`}
+              >
                 Track Rakho
               </span>
             </button>
@@ -538,7 +718,7 @@ export function MobileHeader({
             <select
               value={activeSemester}
               onChange={(e) => onSelectActiveSemester(e.target.value)}
-              className="max-w-[110px] truncate px-2 py-1.5 text-xs rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700"
+              className="max-w-[96px] truncate px-2 py-1.5 text-xs rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700"
             >
               <option value="All">All Sem</option>
               {uniqueSemesters.map((sem) => (
@@ -547,6 +727,12 @@ export function MobileHeader({
                 </option>
               ))}
             </select>
+
+            <ThemePicker
+              colorTheme={resolvedTheme}
+              onSelectColorTheme={handleSelectTheme}
+              align="down"
+            />
 
             <button
               type="button"
@@ -612,7 +798,7 @@ export function MobileHeader({
             <div className="relative p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between overflow-hidden">
               <div
                 aria-hidden="true"
-                className="pointer-events-none absolute -top-5 left-3 w-40 h-14 rounded-full bg-gradient-to-r from-violet-500/20 via-teal-400/20 to-emerald-400/15 blur-xl"
+                className={`pointer-events-none absolute -top-5 left-3 w-40 h-14 rounded-full bg-gradient-to-r ${theme.brandHeaderGlow} blur-xl`}
               />
               <button
                 type="button"
@@ -628,17 +814,19 @@ export function MobileHeader({
                 <div className="relative shrink-0">
                   <div
                     aria-hidden="true"
-                    className="pointer-events-none absolute -inset-0.5 rounded-xl bg-gradient-to-tr from-violet-600/45 via-indigo-500/35 to-teal-400/45 blur-sm opacity-80"
+                    className={`pointer-events-none absolute -inset-0.5 rounded-xl bg-gradient-to-tr ${theme.logoAura} blur-sm opacity-80`}
                   />
                   <img
                     src="/logo.svg?v=2"
                     alt="Track Rakho"
-                    className={`relative w-8 h-8 rounded-lg object-cover ring-1 ring-white/40 dark:ring-indigo-300/30 shadow-[0_0_16px_-2px_rgba(124,58,237,0.45)] transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-active:scale-90 group-active:-rotate-6 ${
+                    className={`relative w-8 h-8 rounded-lg object-cover ring-1 ring-white/40 dark:ring-white/20 ${theme.logoShadow} transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-active:scale-90 group-active:-rotate-6 ${
                       brandBouncing ? 'rotate-6 scale-110' : ''
                     }`}
                   />
                 </div>
-                <span className="font-extrabold text-base tracking-tight bg-gradient-to-r from-slate-900 via-teal-800 to-indigo-900 dark:from-white dark:via-teal-100 dark:to-indigo-200 bg-clip-text text-transparent drop-shadow-[0_0_8px_rgba(20,184,166,0.25)] dark:drop-shadow-[0_0_12px_rgba(45,212,191,0.5)]">
+                <span
+                  className={`font-extrabold text-base tracking-tight bg-gradient-to-r bg-clip-text text-transparent ${theme.brandText}`}
+                >
                   Track Rakho
                 </span>
               </button>
@@ -659,6 +847,7 @@ export function MobileHeader({
               onSelectCategorizedAssessment={onSelectCategorizedAssessment}
               pendingCounts={pendingCounts}
               subCounts={subCounts}
+              theme={theme}
               onItemSelect={() => setDrawerOpen(false)}
             />
           </aside>
@@ -673,10 +862,13 @@ export function MobileBottomNav({
   activeTab,
   setActiveTab,
   pendingCounts,
+  colorTheme,
   categoryFilters,
   onSelectCategorizedAssessment,
   subCounts,
 }: MobileBottomNavProps) {
+  const [resolvedTheme] = useSyncedColorTheme(colorTheme);
+  const theme = COLOR_THEMES[resolvedTheme];
   const activeBtnRef = useRef<HTMLButtonElement | null>(null);
   const [openSubMenu, setOpenSubMenu] = useState<CategorizedAssessmentType | null>(null);
   const [bumpedKey, setBumpedKey] = useState<string | null>(null);
@@ -742,7 +934,7 @@ export function MobileBottomNav({
                         : 'translate-y-0 scale-100'
                     } ${
                       isSelected
-                        ? 'bg-teal-600 text-white shadow-xs'
+                        ? theme.activeSubNav
                         : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
                     }`}
                   >
@@ -806,7 +998,7 @@ export function MobileBottomNav({
                 isBumped ? '-translate-y-1 scale-[1.04]' : 'translate-y-0 scale-100'
               } ${
                 isActive
-                  ? 'bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400'
+                  ? theme.activeNav
                   : 'bg-transparent text-slate-500 dark:text-slate-400'
               }`}
             >
@@ -817,7 +1009,9 @@ export function MobileBottomNav({
                   }`}
                 />
                 {badge > 0 && (
-                  <span className="absolute -top-1.5 -right-2.5 min-w-[16px] h-4 px-1 flex items-center justify-center text-[10px] font-bold rounded-full bg-teal-600 text-white">
+                  <span
+                    className={`absolute -top-1.5 -right-2.5 min-w-[16px] h-4 px-1 flex items-center justify-center text-[10px] font-bold rounded-full ${theme.badge}`}
+                  >
                     {badge}
                   </span>
                 )}
