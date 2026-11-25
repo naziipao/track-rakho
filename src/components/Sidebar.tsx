@@ -180,7 +180,8 @@ function NavMenuList({
           <div key={item.id}>
             <button
               type="button"
-              onClick={() => {
+              onClick={(e) => {
+                e.currentTarget.blur();
                 triggerBump(item.id);
                 if (item.categorized) {
                   setExpanded((prev) => ({
@@ -197,7 +198,7 @@ function NavMenuList({
               } ${
                 isActive
                   ? 'bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300'
-                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                  : 'bg-transparent text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
               }`}
             >
               <span className="flex items-center gap-3">
@@ -237,7 +238,8 @@ function NavMenuList({
                     <button
                       key={cat}
                       type="button"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.currentTarget.blur();
                         triggerBump(subKey);
                         onSelectCategorizedAssessment(item.categorized!, cat);
                         onItemSelect?.();
@@ -249,7 +251,7 @@ function NavMenuList({
                       } ${
                         subActive
                           ? 'bg-teal-600 text-white shadow-sm'
-                          : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                          : 'bg-transparent text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
                       }`}
                     >
                       <span>{cat}</span>
@@ -328,7 +330,10 @@ export function Sidebar({
         />
         <button
           type="button"
-          onClick={handleBrandPress}
+          onClick={(e) => {
+            e.currentTarget.blur();
+            handleBrandPress();
+          }}
           className={`group relative flex items-center gap-3 text-left select-none cursor-pointer [-webkit-tap-highlight-color:transparent] focus:outline-none transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-90 active:translate-y-0.5 ${
             brandBouncing ? '-translate-y-1.5 scale-105' : 'translate-y-0 scale-100'
           }`}
@@ -386,7 +391,8 @@ export function Sidebar({
       <div className="p-3 border-t border-slate-200 dark:border-slate-800 flex items-center gap-2 shrink-0">
         <button
           type="button"
-          onClick={() => {
+          onClick={(e) => {
+            e.currentTarget.blur();
             triggerActionBump('theme');
             onToggleDarkMode();
           }}
@@ -413,7 +419,8 @@ export function Sidebar({
         </button>
         <button
           type="button"
-          onClick={() => {
+          onClick={(e) => {
+            e.currentTarget.blur();
             triggerActionBump('logout');
             onLogout();
           }}
@@ -488,7 +495,10 @@ export function MobileHeader({
           <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
-              onClick={() => setDrawerOpen(true)}
+              onClick={(e) => {
+                e.currentTarget.blur();
+                setDrawerOpen(true);
+              }}
               aria-label="Open menu"
               className="p-2 -ml-1 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 select-none cursor-pointer [-webkit-tap-highlight-color:transparent] focus:outline-none transition-transform duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-90"
             >
@@ -497,7 +507,10 @@ export function MobileHeader({
 
             <button
               type="button"
-              onClick={handleBrandPress}
+              onClick={(e) => {
+                e.currentTarget.blur();
+                handleBrandPress();
+              }}
               className={`group relative flex items-center gap-2 shrink-0 select-none cursor-pointer [-webkit-tap-highlight-color:transparent] focus:outline-none transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-90 active:translate-y-0.5 ${
                 brandBouncing ? '-translate-y-1 scale-105' : 'translate-y-0 scale-100'
               }`}
@@ -537,7 +550,8 @@ export function MobileHeader({
 
             <button
               type="button"
-              onClick={() => {
+              onClick={(e) => {
+                e.currentTarget.blur();
                 triggerActionBump('theme');
                 onToggleDarkMode();
               }}
@@ -565,7 +579,8 @@ export function MobileHeader({
 
             <button
               type="button"
-              onClick={() => {
+              onClick={(e) => {
+                e.currentTarget.blur();
                 triggerActionBump('logout');
                 onLogout();
               }}
@@ -601,7 +616,8 @@ export function MobileHeader({
               />
               <button
                 type="button"
-                onClick={() => {
+                onClick={(e) => {
+                  e.currentTarget.blur();
                   handleBrandPress();
                   setDrawerOpen(false);
                 }}
@@ -679,7 +695,9 @@ export function MobileBottomNav({
   }, [bumpedKey]);
 
   useEffect(() => {
-    setOpenSubMenu(null);
+    if (activeTab !== 'Assignment' && activeTab !== 'Midterm' && activeTab !== 'Final') {
+      setOpenSubMenu(null);
+    }
     activeBtnRef.current?.scrollIntoView({
       behavior: 'smooth',
       inline: 'center',
@@ -692,65 +710,68 @@ export function MobileBottomNav({
       aria-label="Mobile Navigation"
       className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-t border-slate-200 dark:border-slate-800 pb-[env(safe-area-inset-bottom)]"
     >
-      {/* Mobile Sub-Menu — opens when tapping Assignment / Midterm / Final without redirecting */}
-      {openSubMenu && categoryFilters && onSelectCategorizedAssessment && (
-        <div className="px-3 py-2 border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/95 dark:bg-slate-900/95 flex items-center justify-between gap-2">
-          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 pl-1 shrink-0">
-            {openSubMenu}:
-          </span>
-          <div className="flex-1 flex items-center justify-center gap-2">
-            {(['Theory', 'Lab'] as AssessmentCategory[]).map((cat) => {
-              const subKey = `${openSubMenu}-${cat}`;
-              const isSelected =
-                activeTab === openSubMenu && categoryFilters[openSubMenu] === cat;
-              const count = subCounts?.[openSubMenu]?.[cat];
-              const isSubBumped = bumpedKey === subKey;
+      {/* Mobile Sub-Menu — opens for the active Assignment / Midterm / Final tab */}
+      {openSubMenu &&
+        activeTab === openSubMenu &&
+        categoryFilters &&
+        onSelectCategorizedAssessment && (
+          <div className="px-3 py-2 border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/95 dark:bg-slate-900/95 flex items-center justify-between gap-2">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 pl-1 shrink-0">
+              {openSubMenu}:
+            </span>
+            <div className="flex-1 flex items-center justify-center gap-2">
+              {(['Theory', 'Lab'] as AssessmentCategory[]).map((cat) => {
+                const subKey = `${openSubMenu}-${cat}`;
+                const isSelected = categoryFilters[openSubMenu] === cat;
+                const count = subCounts?.[openSubMenu]?.[cat];
+                const isSubBumped = bumpedKey === subKey;
 
-              return (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => {
-                    triggerBump(subKey);
-                    onSelectCategorizedAssessment(openSubMenu, cat);
-                    setOpenSubMenu(null);
-                  }}
-                  className={`flex-1 max-w-[130px] flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-semibold select-none cursor-pointer [-webkit-tap-highlight-color:transparent] focus:outline-none transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-95 ${
-                    isSubBumped
-                      ? '-translate-y-0.5 scale-[1.03]'
-                      : 'translate-y-0 scale-100'
-                  } ${
-                    isSelected
-                      ? 'bg-teal-600 text-white shadow-xs'
-                      : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
-                  }`}
-                >
-                  <span>{cat}</span>
-                  {typeof count === 'number' && (
-                    <span
-                      className={`px-1.5 py-0.2 rounded-full text-[10px] ${
-                        isSelected
-                          ? 'bg-white/20 text-white'
-                          : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300'
-                      }`}
-                    >
-                      {count}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={(e) => {
+                      e.currentTarget.blur();
+                      triggerBump(subKey);
+                      onSelectCategorizedAssessment(openSubMenu, cat);
+                      setOpenSubMenu(null);
+                    }}
+                    className={`flex-1 max-w-[130px] flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-semibold select-none cursor-pointer [-webkit-tap-highlight-color:transparent] focus:outline-none transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-95 ${
+                      isSubBumped
+                        ? '-translate-y-0.5 scale-[1.03]'
+                        : 'translate-y-0 scale-100'
+                    } ${
+                      isSelected
+                        ? 'bg-teal-600 text-white shadow-xs'
+                        : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
+                    }`}
+                  >
+                    <span>{cat}</span>
+                    {typeof count === 'number' && (
+                      <span
+                        className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+                          isSelected
+                            ? 'bg-white/20 text-white'
+                            : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300'
+                        }`}
+                      >
+                        {count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            <button
+              type="button"
+              onClick={() => setOpenSubMenu(null)}
+              aria-label="Close sub-menu"
+              className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 [-webkit-tap-highlight-color:transparent] focus:outline-none"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => setOpenSubMenu(null)}
-            aria-label="Close sub-menu"
-            className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 [-webkit-tap-highlight-color:transparent] focus:outline-none"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      )}
+        )}
 
       {/* Horizontally Scrollable Bottom Tabs */}
       <div
@@ -760,7 +781,6 @@ export function MobileBottomNav({
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
-          const isSubMenuOpen = Boolean(item.categorized && openSubMenu === item.categorized);
           const badge = item.countKey ? pendingCounts[item.countKey] : 0;
           const isBumped = bumpedKey === item.id;
 
@@ -769,9 +789,11 @@ export function MobileBottomNav({
               key={item.id}
               ref={isActive ? activeBtnRef : null}
               type="button"
-              onClick={() => {
+              onClick={(e) => {
+                e.currentTarget.blur();
                 triggerBump(item.id);
                 if (item.categorized) {
+                  setActiveTab(item.id);
                   setOpenSubMenu((prev) =>
                     prev === item.categorized ? null : item.categorized!
                   );
@@ -785,9 +807,7 @@ export function MobileBottomNav({
               } ${
                 isActive
                   ? 'bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400'
-                  : isSubMenuOpen
-                    ? 'bg-slate-100 dark:bg-slate-800/80 text-slate-800 dark:text-slate-200 ring-1 ring-slate-200 dark:ring-slate-700'
-                    : 'text-slate-500 dark:text-slate-400'
+                  : 'bg-transparent text-slate-500 dark:text-slate-400'
               }`}
             >
               <div className="relative">
