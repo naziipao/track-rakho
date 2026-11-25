@@ -561,6 +561,28 @@ export default function AcademicPlanner() {
     fetchAllData();
   };
 
+  const handleToggleDoneAssessment = async (id: string, isDone: boolean) => {
+    const previous = assessments;
+    setAssessments((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, is_done: isDone } : item))
+    );
+
+    const { error } = await supabase
+      .from('assessments')
+      .update({ is_done: isDone })
+      .eq('id', id);
+
+    if (error) {
+      setAssessments(previous);
+      alert(
+        `Could not update status: ${error.message}\n\nMake sure you ran the SQL query in Supabase to add the 'is_done' column to the 'assessments' table.`
+      );
+      return;
+    }
+
+    fetchAllData();
+  };
+
   const handleAddAttendance = async (payload: {
     course_id: string;
     missed_date: string;
@@ -805,6 +827,7 @@ export default function AcademicPlanner() {
               upcomingAssessments={visibleAssessments}
               setActiveTab={setActiveTab}
               onOpenNoteModal={() => setActiveModal('note')}
+              onToggleDoneAssessment={handleToggleDoneAssessment}
             />
           )}
 
@@ -840,6 +863,7 @@ export default function AcademicPlanner() {
               onOpenAddAssessment={openAssessmentModal}
               onEditAssessment={openEditAssessmentModal}
               onDeleteAssessment={handleDeleteAssessment}
+              onToggleDoneAssessment={handleToggleDoneAssessment}
             />
           )}
 

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Plus, Trash2, MapPin, Pencil } from 'lucide-react';
+import { Plus, Trash2, MapPin, Pencil, Check, CheckCircle2, X } from 'lucide-react';
 import {
   Assessment,
   AssessmentCategory,
@@ -20,6 +20,7 @@ interface AssessmentViewProps {
   onOpenAddAssessment: (type: AssessmentType, category?: AssessmentCategory) => void;
   onEditAssessment: (item: Assessment) => void;
   onDeleteAssessment: (id: string) => void;
+  onToggleDoneAssessment?: (id: string, isDone: boolean) => void;
 }
 
 const getCardGlowStyle = (type: AssessmentType) => {
@@ -35,6 +36,9 @@ const getCardGlowStyle = (type: AssessmentType) => {
   }
 };
 
+const DONE_CARD_STYLE =
+  'bg-emerald-50/85 dark:bg-emerald-950/30 border-emerald-500/55 dark:border-emerald-400/50 shadow-[0_0_24px_-4px_rgba(16,185,129,0.22)] dark:shadow-[0_0_28px_-4px_rgba(52,211,153,0.25)] hover:border-emerald-500/80 dark:hover:border-emerald-300/75 hover:shadow-[0_0_36px_-2px_rgba(16,185,129,0.35)]';
+
 export default function AssessmentView({
   activeType,
   assessments,
@@ -45,9 +49,11 @@ export default function AssessmentView({
   onOpenAddAssessment,
   onEditAssessment,
   onDeleteAssessment,
+  onToggleDoneAssessment,
 }: AssessmentViewProps) {
   const meta = ASSESSMENT_TAB_META[activeType];
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [confirmDoneItem, setConfirmDoneItem] = useState<Assessment | null>(null);
   const hasCategories =
     activeType === 'Assignment' || activeType === 'Midterm' || activeType === 'Final';
   const isExamTab = activeType === 'Midterm' || activeType === 'Final';
@@ -63,6 +69,12 @@ export default function AssessmentView({
       ? `Add ${categoryFilter} ${activeType}`
       : `Add ${categoryFilter} ${activeType}`
     : meta.buttonLabel;
+
+  const handleConfirmToggleDone = () => {
+    if (!confirmDoneItem) return;
+    onToggleDoneAssessment?.(confirmDoneItem.id, !confirmDoneItem.is_done);
+    setConfirmDoneItem(null);
+  };
 
   return (
     <div className="space-y-6">
@@ -128,13 +140,18 @@ export default function AssessmentView({
             const countdown = getCountdownBadge(item.due_date);
             const isExam = item.type === 'Midterm' || item.type === 'Final';
             const isConfirming = confirmDeleteId === item.id;
+            const isDone = Boolean(item.is_done);
             const resolvedCategory: AssessmentCategory =
               item.category === 'Lab' ? 'Lab' : 'Theory';
 
             return (
               <div
                 key={item.id}
-                className={`relative overflow-hidden p-5 rounded-2xl bg-white/90 dark:bg-[#11131a]/90 backdrop-blur-xl border ring-1 ring-inset ring-white/60 dark:ring-white/[0.08] transition-all duration-200 hover:-translate-y-0.5 flex flex-col justify-between ${getCardGlowStyle(item.type)}`}
+                className={`relative overflow-hidden p-5 rounded-2xl backdrop-blur-xl border ring-1 ring-inset ring-white/60 dark:ring-white/[0.08] transition-all duration-200 hover:-translate-y-0.5 flex flex-col justify-between ${
+                  isDone
+                    ? DONE_CARD_STYLE
+                    : `bg-white/90 dark:bg-[#11131a]/90 ${getCardGlowStyle(item.type)}`
+                }`}
               >
                 {/* Top-edge specular light reflection */}
                 <div
@@ -172,17 +189,29 @@ export default function AssessmentView({
                         </span>
                       )}
                     </div>
-                    <span
-                      className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border shrink-0 ${countdown.style}`}
-                    >
-                      {countdown.label}
-                    </span>
+
+                    {isDone ? (
+                      <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full border shrink-0 inline-flex items-center gap-1 bg-emerald-500/15 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/40 dark:border-emerald-400/40">
+                        <CheckCircle2 className="w-3 h-3" />
+                        Done
+                      </span>
+                    ) : (
+                      <span
+                        className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border shrink-0 ${countdown.style}`}
+                      >
+                        {countdown.label}
+                      </span>
+                    )}
                   </div>
 
                   <h3 className="font-bold text-base mt-3 flex items-center gap-2">
                     <span
                       className="w-2.5 h-2.5 rounded-full shrink-0"
-                      style={{ backgroundColor: item.courses?.color || '#14b8a6' }}
+                      style={{
+                        backgroundColor: isDone
+                          ? '#10b981'
+                          : item.courses?.color || '#14b8a6',
+                      }}
                     />
                     <span>
                       {item.courses?.code}
@@ -232,6 +261,27 @@ export default function AssessmentView({
                   ) : (
                     <div className="flex items-center gap-1.5">
                       <button
+                        type="button"
+                        onClick={() => setConfirmDoneItem(item)}
+                        title={isDone ? 'Marked as done' : 'Mark as done'}
+                        className={`btn-tactile px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 border transition-colors ${
+                          isDone
+                            ? 'bg-emerald-500/15 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/25'
+                            : 'bg-stone-100/90 dark:bg-white/[0.06] text-stone-600 dark:text-zinc-300 border-stone-200/80 dark:border-white/10 hover:text-emerald-600 dark:hover:text-emerald-300 hover:border-emerald-500/40 hover:bg-emerald-500/10'
+                        }`}
+                      >
+                        <span
+                          className={`w-4 h-4 rounded-md flex items-center justify-center border transition-colors ${
+                            isDone
+                              ? 'bg-emerald-500 border-emerald-500 text-white'
+                              : 'border-stone-400/70 dark:border-zinc-500'
+                          }`}
+                        >
+                          {isDone && <Check className="w-3 h-3 stroke-[3]" />}
+                        </span>
+                        <span>{isDone ? 'Done' : 'Mark Done'}</span>
+                      </button>
+                      <button
                         onClick={() => onEditAssessment(item)}
                         title="Edit"
                         className="btn-tactile p-2 rounded-xl text-stone-400 dark:text-zinc-400 hover:text-teal-600 dark:hover:text-teal-300 hover:bg-teal-500/12 active:bg-teal-500/20"
@@ -251,6 +301,77 @@ export default function AssessmentView({
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Custom "Are you sure?" Confirmation Popup */}
+      {confirmDoneItem && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/55 backdrop-blur-sm"
+          onClick={() => setConfirmDoneItem(null)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-sm rounded-2xl bg-white/95 dark:bg-[#11131a]/95 backdrop-blur-xl border border-stone-200/80 dark:border-white/10 shadow-2xl p-6"
+          >
+            <button
+              type="button"
+              onClick={() => setConfirmDoneItem(null)}
+              aria-label="Close"
+              className="absolute top-4 right-4 p-1.5 rounded-lg text-stone-400 hover:text-stone-600 dark:hover:text-zinc-200 hover:bg-stone-100 dark:hover:bg-white/[0.08]"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="flex flex-col items-center text-center">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 dark:bg-emerald-500/20 border border-emerald-500/35 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-4">
+                <CheckCircle2 className="w-6 h-6" />
+              </div>
+
+              <h3 className="text-lg font-bold text-stone-900 dark:text-white">
+                Are you sure?
+              </h3>
+
+              <p className="text-xs text-stone-600 dark:text-zinc-400 mt-2 leading-relaxed">
+                {confirmDoneItem.is_done ? (
+                  <>
+                    Do you want to unmark{' '}
+                    <span className="font-semibold text-stone-800 dark:text-zinc-200">
+                      {confirmDoneItem.courses?.code || confirmDoneItem.type}
+                      {confirmDoneItem.title ? ` (${confirmDoneItem.title})` : ''}
+                    </span>{' '}
+                    as done?
+                  </>
+                ) : (
+                  <>
+                    Do you want to mark{' '}
+                    <span className="font-semibold text-stone-800 dark:text-zinc-200">
+                      {confirmDoneItem.courses?.code || confirmDoneItem.type}
+                      {confirmDoneItem.title ? ` (${confirmDoneItem.title})` : ''}
+                    </span>{' '}
+                    as done?
+                  </>
+                )}
+              </p>
+
+              <div className="w-full flex items-center gap-2.5 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setConfirmDoneItem(null)}
+                  className="btn-tactile flex-1 px-4 py-2.5 rounded-xl bg-stone-100 dark:bg-white/[0.08] hover:bg-stone-200/80 dark:hover:bg-white/[0.14] text-stone-700 dark:text-zinc-200 text-xs font-semibold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmToggleDone}
+                  className="btn-tactile flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white text-xs font-semibold shadow-lg shadow-emerald-500/25"
+                >
+                  {confirmDoneItem.is_done ? 'Yes, Unmark' : 'Yes, Mark Done'}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

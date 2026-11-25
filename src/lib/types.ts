@@ -106,6 +106,7 @@ export interface Assessment {
   topics?: string | null;
   due_date: string;
   room?: string | null;
+  is_done?: boolean;
   courses?: Course;
 }
 
