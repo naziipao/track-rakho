@@ -362,7 +362,7 @@ export function MobileHeader({
               className="flex items-center gap-2 shrink-0"
             >
               <img
-                src="/logo.png?v=2"
+                src="/logo.svg?v=2"
                 alt="Track Rakho"
                 className="w-8 h-8 rounded-lg object-cover shadow-sm shrink-0"
               />
@@ -418,7 +418,7 @@ export function MobileHeader({
             <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <img
-                  src="/logo.png?v=2"
+                  src="/logo.svg?v=2"
                   alt="Track Rakho"
                   className="w-8 h-8 rounded-lg object-cover shadow-sm shrink-0"
                 />
