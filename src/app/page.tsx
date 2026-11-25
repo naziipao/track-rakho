@@ -43,6 +43,7 @@ export default function AcademicPlanner() {
   const [authChecking, setAuthChecking] = useState<boolean>(true);
   const [pinInput, setPinInput] = useState<string>('');
   const [pinError, setPinError] = useState<boolean>(false);
+  const [isVerifying, setIsVerifying] = useState<boolean>(false);
   const [darkMode, setDarkMode] = useState<boolean>(false);
 
   // --- NAVIGATION & DATA STATE ---
@@ -334,13 +335,14 @@ export default function AcademicPlanner() {
   }, [courses, courseTabFilter]);
 
   // --- BACKEND PIN & LOGOUT HANDLERS ---
-  const handleUnlock = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleUnlock = async (pin: string) => {
+    setIsVerifying(true);
+    setPinError(false);
     try {
       const res = await fetch('/api/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pin: pinInput }),
+        body: JSON.stringify({ pin }),
       });
 
       if (res.ok) {
@@ -354,6 +356,9 @@ export default function AcademicPlanner() {
       }
     } catch {
       setPinError(true);
+      setPinInput('');
+    } finally {
+      setIsVerifying(false);
     }
   };
 
@@ -611,8 +616,12 @@ export default function AcademicPlanner() {
     return (
       <LockScreen
         pinInput={pinInput}
-        setPinInput={setPinInput}
+        setPinInput={(val) => {
+          setPinInput(val);
+          if (pinError) setPinError(false);
+        }}
         pinError={pinError}
+        isVerifying={isVerifying}
         onUnlock={handleUnlock}
       />
     );
