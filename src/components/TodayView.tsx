@@ -77,7 +77,7 @@ export default function TodayView({
             {activeSemester !== 'All' && ` • ${activeSemester}`}
           </p>
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mt-1">
-            Today&apos;s Focus
+            Your Dashboard
           </h2>
         </div>
         <div className="flex flex-wrap gap-2">
