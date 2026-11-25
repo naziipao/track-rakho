@@ -57,8 +57,13 @@ function useSyncedColorTheme(
 
   const activeTheme = controlledTheme ?? internalTheme;
 
+  useEffect(() => {
+    document.documentElement.dataset.theme = activeTheme;
+  }, [activeTheme]);
+
   const selectTheme = (next: ColorThemeId) => {
     setInternalTheme(next);
+    document.documentElement.dataset.theme = next;
     try {
       localStorage.setItem(THEME_STORAGE_KEY, next);
     } catch {
@@ -224,6 +229,7 @@ function ThemePicker({
 
       {open && (
         <div
+          data-theme-picker
           className={`absolute right-0 z-50 w-44 p-2 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-xl ${
             align === 'up' ? 'bottom-12' : 'top-11'
           }`}
@@ -484,46 +490,29 @@ export function Sidebar({
 
   return (
     <aside className="hidden md:flex md:flex-col md:fixed md:inset-y-0 md:left-0 md:w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 z-30">
-      <div className="relative p-5 border-b border-slate-200 dark:border-slate-800 flex items-center gap-3 shrink-0 overflow-hidden">
-        <div
-          aria-hidden="true"
-          className={`pointer-events-none absolute -top-6 left-4 w-44 h-16 rounded-full bg-gradient-to-r ${theme.brandHeaderGlow} blur-2xl transition-colors duration-300`}
-        />
+      <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center gap-3 shrink-0">
         <button
           type="button"
           onClick={(e) => {
             e.currentTarget.blur();
             handleBrandPress();
           }}
-          className={`group relative flex items-center gap-3 text-left select-none cursor-pointer [-webkit-tap-highlight-color:transparent] focus:outline-none transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-90 active:translate-y-0.5 ${
+          className={`group flex items-center gap-3 text-left select-none cursor-pointer [-webkit-tap-highlight-color:transparent] focus:outline-none transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-90 active:translate-y-0.5 ${
             brandBouncing ? '-translate-y-1.5 scale-105' : 'translate-y-0 scale-100'
           }`}
         >
-          <div className="relative shrink-0">
-            <div
-              aria-hidden="true"
-              className={`pointer-events-none absolute -inset-1 rounded-2xl bg-gradient-to-tr ${theme.logoAura} blur-md opacity-80 group-hover:opacity-100 transition-all duration-300`}
-            />
-            <img
-              src="/logo.svg?v=2"
-              alt="Track Rakho"
-              className={`relative w-9 h-9 rounded-xl object-cover ring-1 ring-white/40 dark:ring-white/20 ${theme.logoShadow} transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:scale-105 group-active:scale-90 group-active:-rotate-6 ${
-                brandBouncing ? 'rotate-6 scale-110' : ''
-              }`}
-            />
-          </div>
-
-          <div className="relative">
-            <span
-              aria-hidden="true"
-              className={`pointer-events-none absolute -inset-x-1.5 -inset-y-0.5 rounded-lg bg-gradient-to-r ${theme.brandTextAura} blur-md opacity-75 group-hover:opacity-100 transition-all duration-300`}
-            />
-            <span
-              className={`relative font-extrabold text-lg tracking-tight bg-gradient-to-r bg-clip-text text-transparent ${theme.brandText}`}
-            >
-              Track Rakho
-            </span>
-          </div>
+          <img
+            src="/logo.svg?v=2"
+            alt="Track Rakho"
+            className={`w-9 h-9 rounded-xl object-cover shrink-0 transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:scale-105 group-active:scale-90 group-active:-rotate-6 ${
+              brandBouncing ? 'rotate-6 scale-110' : ''
+            }`}
+          />
+          <span
+            className={`font-extrabold text-lg tracking-tight bg-gradient-to-r bg-clip-text text-transparent ${theme.brandText}`}
+          >
+            Track Rakho
+          </span>
         </button>
       </div>
 
@@ -689,23 +678,17 @@ export function MobileHeader({
                 e.currentTarget.blur();
                 handleBrandPress();
               }}
-              className={`group relative flex items-center gap-2 shrink-0 select-none cursor-pointer [-webkit-tap-highlight-color:transparent] focus:outline-none transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-90 active:translate-y-0.5 ${
+              className={`group flex items-center gap-2 shrink-0 select-none cursor-pointer [-webkit-tap-highlight-color:transparent] focus:outline-none transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-90 active:translate-y-0.5 ${
                 brandBouncing ? '-translate-y-1 scale-105' : 'translate-y-0 scale-100'
               }`}
             >
-              <div className="relative shrink-0">
-                <div
-                  aria-hidden="true"
-                  className={`pointer-events-none absolute -inset-0.5 rounded-xl bg-gradient-to-tr ${theme.logoAura} blur-sm opacity-80`}
-                />
-                <img
-                  src="/logo.svg?v=2"
-                  alt="Track Rakho"
-                  className={`relative w-8 h-8 rounded-lg object-cover ring-1 ring-white/40 dark:ring-white/20 ${theme.logoShadow} transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-active:scale-90 group-active:-rotate-6 ${
-                    brandBouncing ? 'rotate-6 scale-110' : ''
-                  }`}
-                />
-              </div>
+              <img
+                src="/logo.svg?v=2"
+                alt="Track Rakho"
+                className={`w-8 h-8 rounded-lg object-cover shrink-0 transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-active:scale-90 group-active:-rotate-6 ${
+                  brandBouncing ? 'rotate-6 scale-110' : ''
+                }`}
+              />
               <span
                 className={`font-extrabold text-sm tracking-tight whitespace-nowrap bg-gradient-to-r bg-clip-text text-transparent ${theme.brandText}`}
               >
@@ -795,11 +778,7 @@ export function MobileHeader({
             onClick={() => setDrawerOpen(false)}
           />
           <aside className="relative w-72 max-w-[82vw] h-full bg-white dark:bg-slate-900 shadow-2xl flex flex-col z-10">
-            <div className="relative p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between overflow-hidden">
-              <div
-                aria-hidden="true"
-                className={`pointer-events-none absolute -top-5 left-3 w-40 h-14 rounded-full bg-gradient-to-r ${theme.brandHeaderGlow} blur-xl`}
-              />
+            <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
               <button
                 type="button"
                 onClick={(e) => {
@@ -807,23 +786,17 @@ export function MobileHeader({
                   handleBrandPress();
                   setDrawerOpen(false);
                 }}
-                className={`group relative flex items-center gap-2.5 select-none cursor-pointer [-webkit-tap-highlight-color:transparent] focus:outline-none transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-90 active:translate-y-0.5 ${
+                className={`group flex items-center gap-2.5 select-none cursor-pointer [-webkit-tap-highlight-color:transparent] focus:outline-none transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-90 active:translate-y-0.5 ${
                   brandBouncing ? '-translate-y-1 scale-105' : 'translate-y-0 scale-100'
                 }`}
               >
-                <div className="relative shrink-0">
-                  <div
-                    aria-hidden="true"
-                    className={`pointer-events-none absolute -inset-0.5 rounded-xl bg-gradient-to-tr ${theme.logoAura} blur-sm opacity-80`}
-                  />
-                  <img
-                    src="/logo.svg?v=2"
-                    alt="Track Rakho"
-                    className={`relative w-8 h-8 rounded-lg object-cover ring-1 ring-white/40 dark:ring-white/20 ${theme.logoShadow} transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-active:scale-90 group-active:-rotate-6 ${
-                      brandBouncing ? 'rotate-6 scale-110' : ''
-                    }`}
-                  />
-                </div>
+                <img
+                  src="/logo.svg?v=2"
+                  alt="Track Rakho"
+                  className={`w-8 h-8 rounded-lg object-cover shrink-0 transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-active:scale-90 group-active:-rotate-6 ${
+                    brandBouncing ? 'rotate-6 scale-110' : ''
+                  }`}
+                />
                 <span
                   className={`font-extrabold text-base tracking-tight bg-gradient-to-r bg-clip-text text-transparent ${theme.brandText}`}
                 >
@@ -834,7 +807,7 @@ export function MobileHeader({
                 type="button"
                 onClick={() => setDrawerOpen(false)}
                 aria-label="Close menu"
-                className="relative p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 select-none cursor-pointer [-webkit-tap-highlight-color:transparent] focus:outline-none transition-transform duration-200 active:scale-90"
+                className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 select-none cursor-pointer [-webkit-tap-highlight-color:transparent] focus:outline-none transition-transform duration-200 active:scale-90"
               >
                 <X className="w-5 h-5" />
               </button>
