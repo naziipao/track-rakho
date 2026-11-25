@@ -524,8 +524,7 @@ export default function AcademicPlanner() {
   const handleAddAssessment = async (e: React.FormEvent) => {
     e.preventDefault();
     const isExam = assessmentForm.type === 'Midterm' || assessmentForm.type === 'Final';
-    const hasCategory =
-      assessmentForm.type === 'Assignment' || isExam;
+    const hasCategory = assessmentForm.type === 'Assignment' || isExam;
     const finalTitle = isExam
       ? `${assessmentForm.category} ${assessmentForm.type} Exam`
       : assessmentForm.title.trim();
@@ -740,7 +739,11 @@ export default function AcademicPlanner() {
 
   // --- MAIN APP SHELL ---
   return (
-    <div className="min-h-screen pb-24 md:pb-8 flex flex-col md:flex-row">
+    <div
+      className={`min-h-screen ${
+        activeCategorizedType ? 'pb-36' : 'pb-24'
+      } md:pb-8 flex flex-col md:flex-row`}
+    >
       <Sidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -757,13 +760,18 @@ export default function AcademicPlanner() {
       />
 
       <MobileHeader
+        activeTab={activeTab}
         setActiveTab={setActiveTab}
+        categoryFilters={categoryFilters}
+        onSelectCategorizedAssessment={handleSelectCategorizedAssessment}
         uniqueSemesters={uniqueSemesters}
         activeSemester={activeSemester}
         onSelectActiveSemester={handleSelectActiveSemester}
         darkMode={darkMode}
         onToggleDarkMode={toggleDarkMode}
         onLogout={handleLogout}
+        pendingCounts={pendingCounts}
+        subCounts={subCounts}
       />
 
       <main className="flex-1 md:pl-64">
@@ -875,6 +883,9 @@ export default function AcademicPlanner() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         pendingCounts={pendingCounts}
+        categoryFilters={categoryFilters}
+        onSelectCategorizedAssessment={handleSelectCategorizedAssessment}
+        subCounts={subCounts}
       />
 
       <Modals
